@@ -128,7 +128,6 @@ if st.session_state.page == 'Data Management':
             margin=dict(t=0, b=0, l=0, r=0),
             height=180,
             paper_bgcolor="white",
-            annotations=
         )
         return fig
 
