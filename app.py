@@ -68,7 +68,7 @@ def add_logo_header():
     col_logo, col_empty = st.columns([1, 4])
     with col_logo:
         # Replace the URL with your local "reynolds_logo.png" file path
-        st.image("https://upload.wikimedia.org", use_container_width=True)
+        st.image("https://cdn.cookielaw.org/logos/407adc39-6c4f-4c00-9cd2-302b791fe78b/0199158f-0931-7d33-b924-f44d3beba94c/e29bf1bf-ccf0-4686-8a99-f1f1b8dc5aca/rcp.png", use_container_width=True)
     st.markdown("<hr style='margin-top:0; margin-bottom:20px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
 # Call this at the start of your page rendering
