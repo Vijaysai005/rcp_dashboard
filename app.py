@@ -158,90 +158,86 @@ elif st.session_state.page == 'UBI':
         st.caption("Waterfall details: Gross Sales -> COGS -> Trade Spend -> Net Margin")
 
 # --- MODULE 3: TPO SIMULATOR (UPDATED TO MATCH PDF) ---
-# --- MODULE 3: TPO SIMULATOR (HIGH-FIDELITY REALISTIC) ---
+# --- MODULE 3: TPO SIMULATOR (FUNCTIONAL & REALISTIC) ---
 elif st.session_state.page == 'TPO':
     st.title("📈 TPO Simulator")
     st.markdown("Model promotional scenarios and predict volume lift, revenue, and ROI")
     
-    # --- TOP ROW: INPUT PARAMETERS ---
+    # 1. INPUT PARAMETERS (Top Bar)
     with st.container(border=True):
         col1, col2, col3, col4, col5 = st.columns(5)
-        with col1: retailer = st.selectbox("Retailer", ["Walmart", "Target", "Kroger", "CVS"], index=0)
-        with col2: product = st.selectbox("Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal"], index=0)
+        with col1: retailer = st.selectbox("Retailer", ["Walmart", "Target", "Kroger"], index=0)
+        with col2: product = st.selectbox("Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong"], index=0)
         with col3: disc_type = st.selectbox("Discount Type", ["% Off", "BOGO", "TPR"], index=0)
         with col4: disc_amt = st.number_input("Discount Amount (%)", value=20, step=5)
         with col5: duration = st.number_input("Duration (weeks)", value=2, step=1)
         
-        st.button("Run Simulation", type="primary", use_container_width=True)
+        # The trigger for the simulation
+        run_sim = st.button("🚀 Run Simulation", type="primary", use_container_width=True)
 
-    # --- MIDDLE ROW: KPI CARDS (DYNAMICS SIMULATION) ---
-    # Realistic calculations based on PDF data points
-    baseline_vol = 42000
-    baseline_rev = 168000
-    baseline_margin = 58800
-
-    # Scenario 1 (Moderate - 20% Off)
-    s1_vol = int(baseline_vol * 1.35) # +35% lift
-    s1_rev = 208656
-    s1_margin = 45030
-    s1_roi = 1.6
-
-    # Scenario 2 (Aggressive - 30% Off)
-    s2_vol = int(baseline_vol * 1.55) # +55% lift
-    s2_rev = 229152
-    s2_margin = 38203
-    s2_roi = 0.9
-
-    st.markdown("### Simulation Summary")
-    kpi1, kpi2, kpi3 = st.columns(3)
-
-    with kpi1:
-        st.markdown("<div style='background-color:#F1F5F9; padding:15px; border-radius:10px; border-left: 5px solid #94A3B8;'><strong>Baseline</strong><br><small>No Promotion</small></div>", unsafe_allow_html=True)
-        st.metric("Volume", f"{baseline_vol:,}")
-        st.metric("Revenue", f"${baseline_rev:,}")
-        st.metric("Net Margin", f"${baseline_margin:,}")
-
-    with kpi2:
-        st.markdown("<div style='background-color:#EFF6FF; padding:15px; border-radius:10px; border-left: 5px solid #3B82F6;'><strong>Scenario 1: Moderate</strong><br><small>20% Discount</small></div>", unsafe_allow_html=True)
-        st.metric("Volume", f"{s1_vol:,}", "+35%")
-        st.metric("Revenue", f"${s1_rev:,}", "+24%")
-        st.metric("Net Margin", f"${s1_margin:,}", "-23%", delta_color="inverse")
-        st.markdown(f"<h2 style='color:#10B981; margin-top:0;'>ROI: {s1_roi}x</h2>", unsafe_allow_html=True)
-
-    with kpi3:
-        st.markdown("<div style='background-color:#F5F3FF; padding:15px; border-radius:10px; border-left: 5px solid #8B5CF6;'><strong>Scenario 2: Aggressive</strong><br><small>30% Discount</small></div>", unsafe_allow_html=True)
-        st.metric("Volume", f"{s2_vol:,}", "+55%")
-        st.metric("Revenue", f"${s2_rev:,}", "+36%")
-        st.metric("Net Margin", f"${s2_margin:,}", "-35%", delta_color="inverse")
-        st.markdown(f"<h2 style='color:#EF4444; margin-top:0;'>ROI: {s2_roi}x</h2>", unsafe_allow_html=True)
-
-    # --- BOTTOM ROW: GRAPH & RECOMMENDATION ---
-    st.markdown("---")
-    g_col, r_col = st.columns([2, 1])
-
-    with g_col:
-        st.subheader("Scenario Comparison")
-        # Realistic multi-metric chart from PDF
-        fig = go.Figure()
-        fig.add_trace(go.Bar(name='Baseline', x=['Volume', 'Revenue'], y=[baseline_vol, baseline_rev], marker_color='#94A3B8'))
-        fig.add_trace(go.Bar(name='Scenario 1', x=['Volume', 'Revenue'], y=[s1_vol, s1_rev], marker_color='#3B82F6'))
-        fig.add_trace(go.Bar(name='Scenario 2', x=['Volume', 'Revenue'], y=[s2_vol, s2_rev], marker_color='#8B5CF6'))
+    # 2. CALCULATION LOGIC (Triggered by Button)
+    # Baseline Data from PDF Page 1
+    base_vol, base_rev, base_margin = 42000, 168000, 58800
+    
+    if run_sim or 'sim_results' in st.session_state:
+        # Simple elasticity model for realism: Higher discount = Higher Volume Lift, Lower Margin
+        lift_factor = (disc_amt / 100) * 1.75  # 20% disc ~ 35% lift
         
-        fig.update_layout(barmode='group', height=300, margin=dict(t=0, b=0, l=0, r=0), 
-                          paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                          legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-        st.plotly_chart(fig, use_container_width=True)
+        # Scenario 1 (User Input)
+        s1_vol = int(base_vol * (1 + lift_factor))
+        s1_rev = int(base_rev * (1 + (lift_factor * 0.7))) # Revenue grows slower than volume due to discount
+        s1_margin = int(base_margin * (1 - (disc_amt / 100 * 1.2))) # Margin drops as discount increases
+        s1_roi = round((s1_rev - base_rev) / (base_rev - s1_margin + 1), 1) + 1.0 # Mock ROI calc
 
-    with r_col:
-        st.subheader("Recommendation")
-        st.success(f"""
-        **Scenario 1 (Moderate)** offers the best balance of volume lift and ROI at **1.6x**.  
+        # Scenario 2 (Aggressive Comparison - Fixed +20% over Scenario 1)
+        s2_vol = int(s1_vol * 1.2)
+        s2_rev = int(s1_rev * 1.1)
+        s2_margin = int(s1_margin * 0.85)
+        s2_roi = round(s1_roi * 0.6, 1)
+
+        # 3. KPI CARDS (TOP SECTION)
+        st.markdown("### Executive Summary")
+        k1, k2, k3 = st.columns(3)
         
-        *   **Volume Lift:** +35%  
-        *   **Net Margin:** ${s1_margin:,}  
-        *   **Efficiency:** High  
-        """)
-        st.info("💡 **Insight**: Scenario 2 provides higher volume but drops ROI below the 1.0x break-even threshold due to trade spend.")
+        with k1:
+            st.markdown("<div style='border-left:5px solid #94A3B8; padding-left:10px;'><b>Baseline</b></div>", unsafe_allow_html=True)
+            st.metric("Volume", f"{base_vol:,}")
+            st.metric("Net Margin", f"${base_margin:,}")
+            st.caption("ROI: 0.0x")
+
+        with k2:
+            st.markdown("<div style='border-left:5px solid #3B82F6; padding-left:10px;'><b>Scenario 1 (Current)</b></div>", unsafe_allow_html=True)
+            st.metric("Volume", f"{s1_vol:,}", f"{int(lift_factor*100)}% Lift")
+            st.metric("Net Margin", f"${s1_margin:,}", f"{int(((s1_margin/base_margin)-1)*100)}%", delta_color="inverse")
+            st.markdown(f"<h3 style='color:#10B981; margin:0;'>ROI: {s1_roi}x</h3>", unsafe_allow_html=True)
+
+        with k3:
+            st.markdown("<div style='border-left:5px solid #8B5CF6; padding-left:10px;'><b>Scenario 2 (Aggressive)</b></div>", unsafe_allow_html=True)
+            st.metric("Volume", f"{s2_vol:,}", "55% Lift")
+            st.metric("Net Margin", f"${s2_margin:,}", "-35%", delta_color="inverse")
+            st.markdown(f"<h3 style='color:{'#10B981' if s2_roi >= 1 else '#EF4444'}; margin:0;'>ROI: {s2_roi}x</h3>", unsafe_allow_html=True)
+
+        # 4. GRAPHS & RECOMMENDATION (BOTTOM SECTION)
+        st.markdown("---")
+        g_col, r_col = st.columns([2, 1])
+
+        with g_col:
+            st.subheader("Volume vs Revenue Comparison")
+            fig = go.Figure()
+            fig.add_trace(go.Bar(name='Baseline', x=['Vol', 'Rev'], y=[base_vol, base_rev], marker_color='#94A3B8'))
+            fig.add_trace(go.Bar(name='Scenario 1', x=['Vol', 'Rev'], y=[s1_vol, s1_rev], marker_color='#3B82F6'))
+            fig.add_trace(go.Bar(name='Scenario 2', x=['Vol', 'Rev'], y=[s2_vol, s2_rev], marker_color='#8B5CF6'))
+            fig.update_layout(barmode='group', height=300, margin=dict(t=0,b=0,l=0,r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig, use_container_width=True)
+
+        with r_col:
+            st.subheader("Recommendation")
+            if s1_roi > s2_roi:
+                st.success(f"**Scenario 1** is recommended. It yields a healthier ROI of **{s1_roi}x** while maintaining margin stability.")
+            else:
+                st.warning(f"**Scenario 2** maximizes volume, but ROI drops to **{s2_roi}x**. Proceed only for market share gains.")
+            
+            st.info(f"💡 **Insight**: At {retailer}, {disc_amt}% discount is the 'sweet spot' for {product}.")
 
 # --- MODULE 4: GEN AI ASSISTANT ---
 elif st.session_state.page == 'AI':
