@@ -102,7 +102,6 @@ def draw_gauge(label, value, color="#2563EB"):
 
 # --- MODULE 1: DATA MANAGEMENT ---
 if st.session_state.page == 'Data Management':
-if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
     # 1. DATA QUALITY SCORECARD (High-Fidelity Donut Charts from PDF Page 4)
