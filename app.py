@@ -184,30 +184,55 @@ elif st.session_state.page == 'UBI':
 
         st.markdown("---")
 
-        # --- 5. MARKET SHARE TRACKER (12 Month Graph - Reactive) ---
-        st.markdown(f"### {sel_ret_kpi} Market Share Tracker")
+        # --- 5. MARKET SHARE TRACKER (12 Month Graph - Reactive with Competitors) ---
+        st.markdown(f"### {sel_ret_kpi} Market Share Tracker (12 Month)")
         months = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb"]
         
-        # Adjusting the line graph baseline based on selected retailer's market share
-        baseline = active['ms']
+        # Adjusting baselines based on selected retailer's market share
+        reynolds_base = active['ms']
+        pl_base = 19.0  # Private Label average from PDF
+        comp_base = 16.5 # Competitor average from PDF
         
         fig_ms = go.Figure()
-        fig_ms.add_trace(go.Scatter(x=months, 
-                                  y=[baseline + np.random.uniform(-1, 1) for _ in range(12)], 
-                                  name="Reynolds", line=dict(color="#2563EB", width=4)))
+
+        # Line 1: Reynolds (Primary - Blue)
+        fig_ms.add_trace(go.Scatter(
+            x=months, 
+            y=[reynolds_base + np.random.uniform(-0.8, 0.8) for _ in range(12)], 
+            name="Reynolds", 
+            line=dict(color="#2563EB", width=4),
+            mode='lines+markers'
+        ))
         
-        fig_ms.add_trace(go.Scatter(x=months, y=[19, 18.8, 19.1, 19.3, 19.5, 19.2, 19.4, 19.6, 19.8, 19.7, 19.9, 19.5], 
-                                  name="Private Label", line=dict(color="#94A3B8", dash='dash')))
+        # Line 2: Private Label (Reference - Grey Dashed)
+        fig_ms.add_trace(go.Scatter(
+            x=months, 
+            y=[pl_base + np.random.uniform(-0.5, 0.5) for _ in range(12)], 
+            name="Private Label", 
+            line=dict(color="#94A3B8", width=2, dash='dash'),
+            mode='lines'
+        ))
+
+        # Line 3: Competitor A (New - Amber)
+        fig_ms.add_trace(go.Scatter(
+            x=months, 
+            y=[comp_base + np.random.uniform(-0.7, 0.7) for _ in range(12)], 
+            name="Competitor A", 
+            line=dict(color="#F59E0B", width=2),
+            mode='lines+markers'
+        ))
 
         fig_ms.update_layout(
-            hovermode="x unified", height=350,
-            yaxis=dict(title="Share %", range=[0, 35]),
+            hovermode="x unified",
+            height=400,
+            yaxis=dict(title="Share %", range=[0, 35], gridcolor='#F1F5F9'),
+            xaxis=dict(gridcolor='#F1F5F9'),
             margin=dict(t=20, b=20),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             plot_bgcolor="white"
         )
+        
         st.plotly_chart(fig_ms, use_container_width=True)
-
 
     with ubi_tabs[1]:
         # 1. PAGE LEVEL FILTERS (Reactive)
