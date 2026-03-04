@@ -227,6 +227,9 @@ elif st.session_state.page == 'AI':
                 st.markdown(response)
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
+            if st.button("Clear Chat History"):
+               st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+               st.rerun()
 
     with ai_right:
         st.subheader("Automated Insights")
@@ -244,11 +247,6 @@ elif st.session_state.page == 'AI':
         - Market share trends  
         - Best promo ROI
         """)
-        
-        if st.button("Clear Chat History"):
-            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
-            st.rerun()
-
 
     with ai_right:
         st.subheader("💡 Context & Insights")
