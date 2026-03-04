@@ -217,23 +217,23 @@ elif st.session_state.page == 'UBI':
            fig_wf.update_layout(height=350, margin=dict(t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
            st.plotly_chart(fig_wf, use_container_width=True)
 
-        with col_roi:
-            st.subheader("Trade ROI Calculator")
-            with st.container(border=True):
-                st.write(f"**Retailer:** {sel_retailer}")
-                promo_spend = st.number_input("Est. Promo Spend ($)", value=25000, step=1000)
-                incremental_vol = st.number_input("Incremental Volume (Units)", value=12000, step=500)
-                unit_margin = st.number_input("Unit Margin ($)", value=3.50)
-                
-                # Formula: (Incremental Volume * Unit Margin) / Promo Spend
-                calc_roi = round((incremental_vol * unit_margin) / promo_spend, 2)
-                
-                st.markdown("---")
-                st.metric("Predicted Trade ROI", f"{calc_roi}x", delta=f"{round(calc_roi - 2.5, 1)}x vs Target")
-                if calc_roi >= 2.5:
-                    st.success("ROI meets the 2.5x target.")
-                else:
-                    st.error("ROI is below 2.5x efficiency target.")
+       with col_roi:
+         st.subheader("Trade ROI Calculator")
+         with st.container(border=True):
+             st.write(f"**Retailer:** {sel_retailer}")
+             promo_spend = st.number_input("Est. Promo Spend ($)", value=25000, step=1000)
+             incremental_vol = st.number_input("Incremental Volume (Units)", value=12000, step=500)
+             unit_margin = st.number_input("Unit Margin ($)", value=3.50)
+             
+             # Formula: (Incremental Volume * Unit Margin) / Promo Spend
+             calc_roi = round((incremental_vol * unit_margin) / promo_spend, 2)
+             
+             st.markdown("---")
+             st.metric("Predicted Trade ROI", f"{calc_roi}x", delta=f"{round(calc_roi - 2.5, 1)}x vs Target")
+             if calc_roi >= 2.5:
+                 st.success("ROI meets the 2.5x target.")
+             else:
+                 st.error("ROI is below 2.5x efficiency target.")
 
 
 # --- MODULE 3: TPO SIMULATOR (UPDATED TO MATCH PDF) ---
