@@ -44,12 +44,12 @@ st.markdown("""
         margin-bottom: 10px;
     }
     
-    /* BUTTON STYLING IN SIDEBAR */
+    /* BUTTON STYLING IN SIDEBAR - FORCED LEFT ALIGNMENT */
     [data-testid="stSidebar"] .stButton button {
-        text-align: left;
-        padding-left: 15px;
+        text-align: left !important;
+        justify-content: flex-start !important; /* This aligns text and icon to the left */
+        padding-left: 15px !important;
         border: 1px solid rgba(255,255,255,0.2);
-        justify-content: flex-start;
         display: flex;
         width: 100%;
     }
