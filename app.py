@@ -150,9 +150,9 @@ if st.session_state.page == 'Data Management':
     with dq_cols[1]:
        create_dq_scorecard("Internal Shipments", 100, "#10B981", "Excellent", "✅")
     with dq_cols[2]:
-       create_dq_scorecard("Trade Planner", 85, "#F59E0B", "Good", "ⓘ")
+       create_dq_scorecard("Trade Planner", 85, "#F59E0B", "Good", "!")
     with dq_cols[3]:
-       create_dq_scorecard("IRI Data", 92, "#10B981", "Good", "ⓘ")
+       create_dq_scorecard("IRI Data", 92, "#10B981", "Good", "!")
        
     st.markdown("<br>", unsafe_allow_html=True)
     
