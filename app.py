@@ -131,14 +131,69 @@ elif st.session_state.page == 'UBI':
     ubi_tabs = st.tabs(["Enterprise KPI Scorecard", "Shipment to Shelf", "SKU & Customer Profitability"])
     
     with ubi_tabs[0]:
+        # --- 1. PAGE LEVEL FILTERS ---
+        with st.container(border=True):
+            c1, c2, c3 = st.columns(3)
+            with c1: sel_bu = st.selectbox("Business Unit", ["All", "Cooking & Baking", "Tableware", "Waste Management"])
+            with c2: sel_ret_kpi = st.selectbox("Retailer View", ["Total Market", "Walmart", "Target", "Kroger", "CVS"])
+            with c3: sel_time = st.select_slider("Timeframe", options=["L13W", "L26W", "L52W/YTD"])
+
+        # --- 2. KEY PERFORMANCE INDICATORS (Top Cards) ---
+        st.markdown("### Key Performance Indicators")
         k1, k2, k3, k4 = st.columns(4)
+        
+        # Custom Metric Styling to match PDF (+/- indicators)
         k1.metric("Market Share", "23.4%", "1.2%", help="Target: 22.5%")
         k2.metric("Velocity", "4.2", "-0.3", help="Target: 4.5")
         k3.metric("Gross Margin", "34.8%", "2.1%", help="Target: 33.0%")
         k4.metric("Trade ROI", "2.8x", "0.4x", help="Target: 2.5x")
+
+        st.markdown("---")
+
+        # --- 3. BRAND & BU SCORECARD ---
+        st.markdown("### Brand & BU Scorecard")
+        bu_data = pd.DataFrame({
+            "BUSINESS UNIT": ["Cooking & Baking", "Tableware", "Waste Management", "Food Storage"],
+            "MARKET SHARE": ["28.5%", "18.2%", "22.1%", "24.8%"],
+            "VELOCITY": ["4.8", "3.9", "4.1", "4.0"],
+            "GROSS MARGIN": ["36.2%", "31.5%", "33.8%", "34.1%"],
+            "TRADE ROI": ["3.1x", "2.4x", "2.7x", "2.9x"]
+        })
         
-        st.subheader("Market Share Tracker (12 Month)")
-        st.line_chart(np.random.randn(12, 3) + [24, 19, 16])
+        # Highlight the primary BU from the PDF
+        def highlight_cooking(s):
+            return ['background-color: #F1F5F9; font-weight: bold' if s.name == 0 else '' for _ in s]
+        
+        st.table(bu_data.style.apply(highlight_cooking, axis=1))
+
+        st.markdown("---")
+
+        # --- 4. MARKET SHARE TRACKER (12 Month Graph) ---
+        st.markdown("### Market Share Tracker (12 Month)")
+        months = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb"]
+        
+        fig_ms = go.Figure()
+        # Mocking the 3 lines from Page 3 of the PDF
+        fig_ms.add_trace(go.Scatter(x=months, y=[23, 23.2, 23.1, 23.5, 23.8, 23.4, 23.6, 23.7, 24, 24.1, 24.2, 23.4], 
+                                  name="Reynolds", line=dict(color="#2563EB", width=4)))
+        fig_ms.add_trace(go.Scatter(x=months, y=[19, 18.8, 19.1, 19.3, 19.5, 19.2, 19.4, 19.6, 19.8, 19.7, 19.9, 19.5], 
+                                  name="Private Label", line=dict(color="#94A3B8", dash='dash')))
+        fig_ms.add_trace(go.Scatter(x=months, y=[16, 16.2, 16.1, 16.5, 16.3, 16.4, 16.6, 16.2, 16.5, 16.8, 16.7, 16.9], 
+                                  name="Competitor A", line=dict(color="#F59E0B", width=2)))
+
+        fig_ms.update_layout(
+            hovermode="x unified",
+            height=400,
+            yaxis=dict(title="Share %", range=[0, 32]),
+            margin=dict(t=20, b=20),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            plot_bgcolor="white"
+        )
+        fig_ms.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#F1F5F9')
+        fig_ms.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#F1F5F9')
+        
+        st.plotly_chart(fig_ms, use_container_width=True)
+
 
     with ubi_tabs[1]:
         # 1. PAGE LEVEL FILTERS (Reactive)
