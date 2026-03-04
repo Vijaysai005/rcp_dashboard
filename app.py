@@ -64,6 +64,16 @@ if 'page' not in st.session_state:
 def set_page(page_name):
     st.session_state.page = page_name
 
+def add_logo_header():
+    col_logo, col_empty = st.columns([1, 4])
+    with col_logo:
+        # Replace the URL with your local "reynolds_logo.png" file path
+        st.image("https://upload.wikimedia.org", use_container_width=True)
+    st.markdown("<hr style='margin-top:0; margin-bottom:20px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
+# Call this at the start of your page rendering
+add_logo_header()
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown("<h2 style='color:white; margin-bottom:0;'>Reynolds</h2>", unsafe_allow_html=True)
