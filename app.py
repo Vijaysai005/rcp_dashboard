@@ -14,48 +14,13 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CUSTOM CSS (Dark Sidebar / Light Main)
+# 2. CUSTOM CSS (Final UI Fixes)
 # ==========================================
-
-# ==========================================
-# 2. CUSTOM CSS (Updated Button Visibility)
-# ==========================================
-st.markdown("""
-<style>
-    /* ... (keep your existing sidebar and block-container code) ... */
-
-    /* BUTTON STYLING IN SIDEBAR - FIX VISIBILITY & ALIGNMENT */
-    [data-testid="stSidebar"] .stButton button {
-        text-align: left !important;
-        justify-content: flex-start !important;
-        padding-left: 15px !important;
-        width: 100%;
-        display: flex;
-        /* Force color so text is visible on the white button backgrounds */
-        color: #001529 !important; 
-        border: 1px solid rgba(0,0,0,0.1) !important;
-    }
-
-    /* Keep the active (Primary) button readable */
-    [data-testid="stSidebar"] .stButton button[kind="primary"] {
-        color: white !important;
-        background-color: #FF4B4B !important; /* Your red highlight color */
-    }
-
-    /* Optional: Ensure the text inside the span is also forced to dark */
-    [data-testid="stSidebar"] .stButton button p {
-        color: inherit !important;
-        text-align: left !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 st.markdown("""
 <style>
     /* FORCE DARK SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #001529 !important;
-        color: white;
     }
     
     /* LEFT ALIGN SIDEBAR CONTENT */
@@ -66,26 +31,47 @@ st.markdown("""
         justify-content: flex-start;
     }
 
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] span, [data-testid="stSidebar"] p {
-        color: #ffffff !important;
-        text-align: left !important;
-    }
-    
     /* LOGO STYLING */
     .sidebar-logo {
         width: 180px;
-        filter: brightness(0) invert(1); /* Makes the logo white for dark background */
+        filter: brightness(0) invert(1); 
         margin-bottom: 10px;
     }
-    
-    /* BUTTON STYLING IN SIDEBAR - FORCED LEFT ALIGNMENT */
+
+    /* FIX BUTTON VISIBILITY & LEFT ALIGNMENT */
     [data-testid="stSidebar"] .stButton button {
         text-align: left !important;
-        justify-content: flex-start !important; /* This aligns text and icon to the left */
+        justify-content: flex-start !important;
         padding-left: 15px !important;
-        border: 1px solid rgba(255,255,255,0.2);
-        display: flex;
-        width: 100%;
+        display: flex !important;
+        width: 100% !important;
+        /* Force dark text for visibility on white unselected buttons */
+        color: #333333 !important; 
+        background-color: #ffffff !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+    }
+
+    /* Ensure text inside button spans is also dark */
+    [data-testid="stSidebar"] .stButton button p {
+        color: #333333 !important;
+        text-align: left !important;
+    }
+
+    /* SELECTED (PRIMARY) BUTTON STYLING */
+    [data-testid="stSidebar"] .stButton button[kind="primary"] {
+        background-color: #FF4B4B !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    [data-testid="stSidebar"] .stButton button[kind="primary"] p {
+        color: white !important;
+    }
+
+    /* HEADER TEXT COLOR */
+    [data-testid="stSidebar"] h2, [data-testid="stSidebar"] p {
+        color: #ffffff !important;
+        text-align: left !important;
     }
     
     /* MAIN CONTENT STYLING */
@@ -128,7 +114,6 @@ Walmart,WMT-WAX-75,Reynolds Cut-Rite Wax Paper,1000233344,Mapped,95%
 # ==========================================
 # 5. UI COMPONENT FUNCTIONS
 # ==========================================
-
 def create_donut_chart(value, title, status_text, color):
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
@@ -142,9 +127,7 @@ def create_donut_chart(value, title, status_text, color):
             'bgcolor': "white",
             'borderwidth': 0,
             'bordercolor': "white",
-            'steps': [
-                {'range': [0, 100], 'color': "#f0f2f5"} 
-            ],
+            'steps': [{'range': [0, 100], 'color': "#f0f2f5"}],
         }
     ))
     fig.update_layout(
@@ -157,7 +140,7 @@ def create_donut_chart(value, title, status_text, color):
 
 def render_sidebar():
     with st.sidebar:
-        # Reynolds Logo and Brand Header
+        # Reynolds Logo 
         st.markdown('<img src="https://www.reynoldsconsumerproducts.com" class="sidebar-logo">', unsafe_allow_html=True)
         st.markdown("## **Reynolds**")
         st.markdown("<p style='color:#a6b1b7; margin-top:-15px; font-size:14px'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
@@ -182,7 +165,6 @@ def render_sidebar():
 # ==========================================
 # 6. MAIN APPLICATION LOGIC
 # ==========================================
-
 def main():
     render_sidebar()
     module = st.session_state.selected_module
@@ -221,7 +203,7 @@ def main():
         if search_query:
             df = df[df["Product Description"].str.contains(search_query, case=False) | df["Retailer SKU"].str.contains(search_query, case=False)]
 
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
 if __name__ == "__main__":
     main()
