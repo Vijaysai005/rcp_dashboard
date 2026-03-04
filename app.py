@@ -108,38 +108,62 @@ if st.session_state.page == 'Data Management':
     st.subheader("Data Quality Scorecard")
     dq_cols = st.columns(4)
     
-    # Function to create the high-fidelity Donut Chart
-    def create_donut(label, value, color, status):
-        fig = go.Figure(go.Pie(
-            values=[value, 100-value],
-            labels=[label, "Gap"],
-            hole=.75,
-            marker_colors=[color, "#F1F5F9"],
-            textinfo='none',
-            hoverinfo='none',
-            showlegend=False
-        ))
-        
-        # Add the percentage text in the center
-        fig.add_annotation(text=f"{value}%", x=0.5, y=0.6, font_size=24, font_family="Inter", font_weight="bold", showarrow=False)
-        fig.add_annotation(text=status, x=0.5, y=0.4, font_size=12, font_family="Inter", font_color=color, showarrow=False)
-        
-        fig.update_layout(
-            margin=dict(t=0, b=0, l=0, r=0),
-            height=180,
-            paper_bgcolor="white",
-        )
-        return fig
+    def create_dq_scorecard(label, value, color, status):
+       # Determine background color for the 'gap' to keep it subtle
+       bg_color = "#F1F5F9"
+       
+       fig = go.Figure(go.Pie(
+           values=[value, 100-value],
+           labels=[label, "Gap"],
+           hole=.78,  # Larger hole for high-fidelity look
+           marker_colors=[color, bg_color],
+           textinfo='none',
+           hoverinfo='none',
+           showlegend=False,
+           sort=False
+       ))
+       
+       # Central Annotations for Value and Status
+       fig.add_annotation(
+           text=f"<b>{value}%</b>", 
+           x=0.5, y=0.55, 
+           font=dict(size=26, family="Inter, sans-serif", color="#1E293B"), 
+           showarrow=False
+       )
+       fig.add_annotation(
+           text=status.upper(), 
+           x=0.5, y=0.38, 
+           font=dict(size=11, family="Inter, sans-serif", color=color, weight="bold"), 
+           showarrow=False
+       )
+       
+       fig.update_layout(
+           margin=dict(t=10, b=10, l=10, r=10),
+           height=200,
+           paper_bgcolor="rgba(0,0,0,0)",
+           plot_bgcolor="rgba(0,0,0,0)",
+       )
+       
+       # Wrapper for the label above the chart
+       st.markdown(f"<p style='text-align: center; color: #64748B; font-weight: 600; margin-bottom: -40px;'>{label}</p>", unsafe_allow_html=True)
+       st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # Display the 4 Gauges from the PDF
-    with dq_cols[0]: st.plotly_chart(create_donut("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
-    with dq_cols[1]: st.plotly_chart(create_donut("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
-    with dq_cols[2]: st.plotly_chart(create_donut("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
-    with dq_cols[3]: st.plotly_chart(create_donut("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
+    # --- DATA QUALITY LAYOUT ---
+    st.subheader("Data Quality Scorecard")
+    dq_cols = st.columns(4)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("---")
-    
+    with dq_cols[0]:
+       create_dq_scorecard("Nielsen POS", 98, "#10B981", "Excellent")
+    with dq_cols[1]:
+       create_dq_scorecard("Internal Shipments", 100, "#10B981", "Excellent")
+    with dq_cols[2]:
+       create_dq_scorecard("Trade Planner", 85, "#F59E0B", "Good")
+    with dq_cols[3]:
+       create_dq_scorecard("IRI Data", 92, "#10B981", "Good")
+       
+       st.markdown("<br>", unsafe_allow_html=True)
+       st.markdown("---")
+       
     # 2. SKU MAPPING ENGINE (Expanded to 30 Records)
     st.subheader("SKU Mapping Engine")
     
