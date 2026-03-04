@@ -104,109 +104,94 @@ def draw_gauge(label, value, color="#2563EB"):
 if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
-    # 1. HIGH-FIDELITY DATA QUALITY SCORECARD (Replicating PDF Page 4)
+    # 1. DATA QUALITY SCORECARD (High-Fidelity Donut Charts from PDF Page 4)
     st.subheader("Data Quality Scorecard")
-    dq1, dq2, dq3, dq4 = st.columns(4)
-
-    def create_high_fidelity_gauge(label, value, color, status):
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=value,
-            number={'suffix': "%", 'font': {'size': 32, 'color': '#1E293B', 'family': "Inter"}},
-            title={'text': f"<b>{label}</b>", 'font': {'size': 15, 'color': '#64748B', 'family': "Inter"}},
-            gauge={
-                'axis': {'range': [0, 100], 'visible': False},
-                'bar': {'color': color, 'thickness': 0.15}, # Thin modern arc
-                'bgcolor': "#F1F5F9",
-                'borderwidth': 0,
-            }
+    dq_cols = st.columns(4)
+    
+    # Function to create the high-fidelity Donut Chart
+    def create_donut(label, value, color, status):
+        fig = go.Figure(go.Pie(
+            values=[value, 100-value],
+            labels=[label, "Gap"],
+            hole=.75,
+            marker_colors=[color, "#F1F5F9"],
+            textinfo='none',
+            hoverinfo='none',
+            showlegend=False
         ))
         
-        # Add the Status Pill (Badge) below the percentage
-        fig.add_annotation(
-            text=f"<b>{status}</b>",
-            x=0.5, y=0.18,
-            showarrow=False,
-            font=dict(size=12, color=color),
-            bgcolor=f"{color}15", # Semi-transparent background
-            bordercolor=color,
-            borderwidth=1,
-            borderpad=5,
-            xref="paper", yref="paper"
-        )
-
+        # Add the percentage text in the center
+        fig.add_annotation(text=f"{value}%", x=0.5, y=0.6, font_size=24, font_family="Inter", font_weight="bold", showarrow=False)
+        fig.add_annotation(text=status, x=0.5, y=0.4, font_size=12, font_family="Inter", font_color=color, showarrow=False)
+        
         fig.update_layout(
-            height=220, 
-            margin=dict(t=50, b=20, l=30, r=30),
-            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=180,
+            paper_bgcolor="white",
         )
         return fig
 
-    # Exact metrics from PDF Page 4
-    with dq1: st.plotly_chart(create_high_fidelity_gauge("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
-    with dq2: st.plotly_chart(create_high_fidelity_gauge("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
-    with dq3: st.plotly_chart(create_high_fidelity_gauge("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
-    with dq4: st.plotly_chart(create_high_fidelity_gauge("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
+    # Display the 4 Gauges from the PDF
+    with dq_cols[0]: st.plotly_chart(create_donut("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
+    with dq_cols[1]: st.plotly_chart(create_donut("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
+    with dq_cols[2]: st.plotly_chart(create_donut("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
+    with dq_cols[3]: st.plotly_chart(create_donut("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # 2. SKU MAPPING ENGINE (30 Records + Search & Filter)
+    # 2. SKU MAPPING ENGINE (Expanded to 30 Records)
     st.subheader("SKU Mapping Engine")
     
     # Generate 30 Realistic Records
     retailers = ["Walmart", "Target", "Kroger", "CVS", "Amazon", "Publix"]
-    products = [
-        "Reynolds Wrap Aluminum Foil 200sqft", "Hefty Ultra Strong 30Gal", 
-        "Reynolds Plastic Wrap 100sqft", "Reynolds Parchment 50sqft", 
-        "Reynolds Foil 75sqft", "Hefty Kitchen Bags 13Gal"
-    ]
+    products = ["Reynolds Wrap Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", 
+                "Reynolds Parchment 50sqft", "Reynolds Foil 75sqft", "Hefty Kitchen Bags 13Gal"]
     
-    mapping_list = []
+    data = []
     for i in range(30):
         ret = retailers[i % len(retailers)]
         prod = products[i % len(products)]
-        sku_id = f"{ret[:3].upper()}-SKU-{1000 + i}"
-        # Make every 5th record "Unmapped"
+        sku_id = f"{ret[:3].upper()}-RF-{100 + i}"
         sap_id = f"1000{234567 + i}" if i % 5 != 0 else "Pending"
         status = "Mapped" if sap_id != "Pending" else "Unmapped"
-        mapping_list.append({
-            "RETAILER": ret,
-            "RETAILER SKU": sku_id,
-            "PRODUCT DESCRIPTION": prod,
-            "SAP MATERIAL #": sap_id,
-            "STATUS": status
+        data.append({
+            "Retailer": ret,
+            "Retailer SKU": sku_id,
+            "Product Description": prod,
+            "SAP Material #": sap_id,
+            "Status": status
         })
     
-    mapping_df = pd.DataFrame(mapping_list)
+    mapping_df = pd.DataFrame(data)
 
-    # UI Controls for Filtering
-    col_search, col_status = st.columns([2, 1])
-    with col_search: 
-        search_query = st.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-SKU-1001")
-    with col_status: 
-        status_filter = st.selectbox("Filter Status", ["All", "Mapped", "Unmapped"])
+    # Search and Filter UI
+    col_f1, col_f2 = st.columns([3, 1])
+    with col_f1: 
+        search = st.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-RF-200")
+    with col_f2: 
+        status_filter = st.selectbox("Status", ["All", "Mapped", "Unmapped"])
 
-    # Apply Logic
-    if search_query:
-        mapping_df = mapping_df[mapping_df.apply(lambda row: search_query.lower() in row.astype(str).str.lower().values, axis=1)]
+    # Apply Filters
+    if search:
+        mapping_df = mapping_df[mapping_df.apply(lambda row: search.lower() in row.astype(str).str.lower().values, axis=1)]
     if status_filter != "All":
-        mapping_df = mapping_df[mapping_df["STATUS"] == status_filter]
+        mapping_df = mapping_df[mapping_df["Status"] == status_filter]
 
-    # Professional Table Styling
+    # Stylized Dataframe
     st.dataframe(
         mapping_df, 
         use_container_width=True, 
         hide_index=True,
-        height=500, # Fixed height for 30-record scrollable view
+        height=500, # Set height to make it scrollable for 30 records
         column_config={
-            "STATUS": st.column_config.TextColumn("STATUS", width="small"),
-            "RETAILER": st.column_config.TextColumn("RETAILER", width="small"),
-            "SAP MATERIAL #": st.column_config.TextColumn("SAP MATERIAL #", width="medium"),
-            "PRODUCT DESCRIPTION": st.column_config.TextColumn("PRODUCT DESCRIPTION", width="large")
+            "Status": st.column_config.TextColumn(
+                "Status",
+                help="Mapping status from Retailer to SAP",
+                validate="^Mapped|Unmapped$"
+            )
         }
     )
-
 
 # --- MODULE 2: UNIFIED BUSINESS INTELLIGENCE ---
 elif st.session_state.page == 'UBI':
