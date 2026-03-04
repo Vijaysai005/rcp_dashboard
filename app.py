@@ -152,10 +152,84 @@ elif st.session_state.page == 'UBI':
         st.error("🚨 **OOS Risk Alert**: Reynolds Wrap 200sqft at CVS (8 Days Supply) - Critical Risk Level")
 
     with ubi_tabs[2]:
-        st.subheader("Margin Waterfall")
-        # Simplified representation of the waterfall logic
-        st.image("https://upload.wikimedia.org", width=700) # Placeholder
-        st.caption("Waterfall details: Gross Sales -> COGS -> Trade Spend -> Net Margin")
+        # 1. PAGE LEVEL FILTERS
+        with st.container(border=True):
+            f1, f2, f3 = st.columns(3)
+            with f1: sel_retailer = st.selectbox("Select Retailer", ["All Retailers", "Walmart", "Target", "Kroger", "CVS"], index=1)
+            with f2: sel_product = st.selectbox("Select Product Category", ["All Products", "Aluminum Foil", "Trash Bags", "Plastic Wrap"], index=1)
+            with f3: sel_period = st.select_slider("Timeframe", options=["L3M", "L6M", "YTD", "FY2025"])
+
+        st.markdown("---")
+
+        # 2. DRIVERS & DRAGGERS: SKU PERFORMANCE MATRIX
+        # Data based on Page 2 "Drivers & Draggers: SKU Performance Matrix"
+        st.subheader("Drivers & Draggers: SKU Performance Matrix")
+        
+        # Mock data points representing the scatter plot on Page 2
+        matrix_data = pd.DataFrame({
+            'SKU': ['Foil 200ft', 'Foil 75ft', 'Trash 30G', 'Wrap 100ft', 'Parchment 50ft', 'Foil 12ft'],
+            'Volume Growth (%)': [12, -5, 8, 2, 15, -10],
+            'Gross Margin (%)': [42, 18, 32, 28, 38, 15],
+            'Color': ['#10B981', '#EF4444', '#3B82F6', '#3B82F6', '#10B981', '#EF4444']
+        })
+
+        fig_matrix = go.Figure()
+        fig_matrix.add_trace(go.Scatter(
+            x=matrix_data['Volume Growth (%)'], y=matrix_data['Gross Margin (%)'],
+            mode='markers+text',
+            text=matrix_data['SKU'],
+            textposition="top center",
+            marker=dict(size=15, color=matrix_data['Color'], line=dict(width=1, color='DarkSlateGrey'))
+        ))
+        fig_matrix.add_hline(y=30, line_dash="dash", line_color="gray", annotation_text="Target Margin (30%)")
+        fig_matrix.add_vline(x=0, line_dash="dash", line_color="gray")
+        fig_matrix.update_layout(height=400, xaxis_title="Volume Growth (%)", yaxis_title="Gross Margin %", margin=dict(t=20))
+        st.plotly_chart(fig_matrix, use_container_width=True)
+
+        st.markdown("---")
+        
+        # 3. MARGIN WATERFALL & TRADE ROI CALCULATOR
+        col_wf, col_roi = st.columns([2, 1])
+
+        with col_wf:
+            st.subheader("Margin Waterfall ($)")
+            # Data based on Page 2 "Margin Waterfall" visual
+            wf_labels = ["Gross Sales", "Trade Spend", "COGS", "Logistics", "Net Margin"]
+            wf_values = [100, -25, -35, -10, 30] # Percentages or scaled dollars
+            
+            fig_wf = go.Figure(go.Waterfall(
+                name = "20", orientation = "v",
+                measure = ["relative", "relative", "relative", "relative", "total"],
+                x = wf_labels,
+                textposition = "outside",
+                text = [f"${v}M" for v in wf_values],
+                y = wf_values,
+                connector = {"line":{"color":"rgb(63, 63, 63)"}},
+                increasing = {"marker":{"color":"#10B981"}},
+                decreasing = {"marker":{"color":"#EF4444"}},
+                totals = {"marker":{"color":"#3B82F6"}}
+            ))
+            fig_wf.update_layout(height=400, margin=dict(t=20, b=20))
+            st.plotly_chart(fig_wf, use_container_width=True)
+
+        with col_roi:
+            st.subheader("Trade ROI Calculator")
+            with st.container(border=True):
+                st.write(f"**Retailer:** {sel_retailer}")
+                promo_spend = st.number_input("Est. Promo Spend ($)", value=25000, step=1000)
+                incremental_vol = st.number_input("Incremental Volume (Units)", value=12000, step=500)
+                unit_margin = st.number_input("Unit Margin ($)", value=3.50)
+                
+                # Formula: (Incremental Volume * Unit Margin) / Promo Spend
+                calc_roi = round((incremental_vol * unit_margin) / promo_spend, 2)
+                
+                st.markdown("---")
+                st.metric("Predicted Trade ROI", f"{calc_roi}x", delta=f"{round(calc_roi - 2.5, 1)}x vs Target")
+                if calc_roi >= 2.5:
+                    st.success("ROI meets the 2.5x target.")
+                else:
+                    st.error("ROI is below 2.5x efficiency target.")
+
 
 # --- MODULE 3: TPO SIMULATOR (UPDATED TO MATCH PDF) ---
 # --- MODULE 3: TPO SIMULATOR (FUNCTIONAL & REALISTIC) ---
