@@ -138,20 +138,31 @@ elif st.session_state.page == 'UBI':
             with c2: sel_ret_kpi = st.selectbox("Retailer View", ["Total Market", "Walmart", "Target", "Kroger", "CVS"])
             with c3: sel_time = st.select_slider("Timeframe", options=["L13W", "L26W", "L52W/YTD"])
 
-        # --- 2. KEY PERFORMANCE INDICATORS (Top Cards) ---
+        # --- 2. DATA ENGINE (Reactive Logic) ---
+        # Mock data mapping to show shifts when retailer/BU changes
+        data_map = {
+            "Total Market": {"ms": 23.4, "ms_d": "1.2%", "vel": 4.2, "gm": "34.8%", "roi": "2.8x"},
+            "Walmart":      {"ms": 28.5, "ms_d": "2.1%", "vel": 4.8, "gm": "36.2%", "roi": "3.1x"},
+            "Target":       {"ms": 19.8, "ms_d": "0.5%", "vel": 4.0, "gm": "33.5%", "roi": "2.6x"},
+            "Kroger":       {"ms": 21.2, "ms_d": "-0.5%", "vel": 3.9, "gm": "32.5%", "roi": "2.4x"},
+            "CVS":          {"ms": 12.4, "ms_d": "-1.1%", "vel": 3.2, "gm": "30.1%", "roi": "1.8x"}
+        }
+        
+        # Get active data based on filter
+        active = data_map.get(sel_ret_kpi, data_map["Total Market"])
+
+        # --- 3. KEY PERFORMANCE INDICATORS ---
         st.markdown("### Key Performance Indicators")
         k1, k2, k3, k4 = st.columns(4)
-        
-        # Custom Metric Styling to match PDF (+/- indicators)
-        k1.metric("Market Share", "23.4%", "1.2%", help="Target: 22.5%")
-        k2.metric("Velocity", "4.2", "-0.3", help="Target: 4.5")
-        k3.metric("Gross Margin", "34.8%", "2.1%", help="Target: 33.0%")
-        k4.metric("Trade ROI", "2.8x", "0.4x", help="Target: 2.5x")
+        k1.metric("Market Share", f"{active['ms']}%", active['ms_d'], help="Target: 22.5%")
+        k2.metric("Velocity", active['vel'], "-0.3", help="Target: 4.5")
+        k3.metric("Gross Margin", active['gm'], "2.1%", help="Target: 33.0%")
+        k4.metric("Trade ROI", active['roi'], "0.4x", help="Target: 2.5x")
 
         st.markdown("---")
 
-        # --- 3. BRAND & BU SCORECARD ---
-        st.markdown("### Brand & BU Scorecard")
+        # --- 4. BRAND & BU SCORECARD (Filtered by Business Unit) ---
+        st.markdown(f"### Brand & BU Scorecard: {sel_ret_kpi}")
         bu_data = pd.DataFrame({
             "BUSINESS UNIT": ["Cooking & Baking", "Tableware", "Waste Management", "Food Storage"],
             "MARKET SHARE": ["28.5%", "18.2%", "22.1%", "24.8%"],
@@ -160,38 +171,41 @@ elif st.session_state.page == 'UBI':
             "TRADE ROI": ["3.1x", "2.4x", "2.7x", "2.9x"]
         })
         
-        # Highlight the primary BU from the PDF
+        # Filter the dataframe if a specific BU is selected
+        if sel_bu != "All":
+            filtered_bu = bu_data[bu_data["BUSINESS UNIT"] == sel_bu]
+        else:
+            filtered_bu = bu_data
+
         def highlight_cooking(s):
             return ['background-color: #F1F5F9; font-weight: bold' if s.name == 0 else '' for _ in s]
         
-        st.table(bu_data.style.apply(highlight_cooking, axis=1))
+        st.table(filtered_bu.style.apply(highlight_cooking, axis=1))
 
         st.markdown("---")
 
-        # --- 4. MARKET SHARE TRACKER (12 Month Graph) ---
-        st.markdown("### Market Share Tracker (12 Month)")
+        # --- 5. MARKET SHARE TRACKER (12 Month Graph - Reactive) ---
+        st.markdown(f"### {sel_ret_kpi} Market Share Tracker")
         months = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb"]
         
+        # Adjusting the line graph baseline based on selected retailer's market share
+        baseline = active['ms']
+        
         fig_ms = go.Figure()
-        # Mocking the 3 lines from Page 3 of the PDF
-        fig_ms.add_trace(go.Scatter(x=months, y=[23, 23.2, 23.1, 23.5, 23.8, 23.4, 23.6, 23.7, 24, 24.1, 24.2, 23.4], 
+        fig_ms.add_trace(go.Scatter(x=months, 
+                                  y=[baseline + np.random.uniform(-1, 1) for _ in range(12)], 
                                   name="Reynolds", line=dict(color="#2563EB", width=4)))
+        
         fig_ms.add_trace(go.Scatter(x=months, y=[19, 18.8, 19.1, 19.3, 19.5, 19.2, 19.4, 19.6, 19.8, 19.7, 19.9, 19.5], 
                                   name="Private Label", line=dict(color="#94A3B8", dash='dash')))
-        fig_ms.add_trace(go.Scatter(x=months, y=[16, 16.2, 16.1, 16.5, 16.3, 16.4, 16.6, 16.2, 16.5, 16.8, 16.7, 16.9], 
-                                  name="Competitor A", line=dict(color="#F59E0B", width=2)))
 
         fig_ms.update_layout(
-            hovermode="x unified",
-            height=400,
-            yaxis=dict(title="Share %", range=[0, 32]),
+            hovermode="x unified", height=350,
+            yaxis=dict(title="Share %", range=[0, 35]),
             margin=dict(t=20, b=20),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             plot_bgcolor="white"
         )
-        fig_ms.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#F1F5F9')
-        fig_ms.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#F1F5F9')
-        
         st.plotly_chart(fig_ms, use_container_width=True)
 
 
