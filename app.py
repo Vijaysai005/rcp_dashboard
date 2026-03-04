@@ -157,30 +157,75 @@ elif st.session_state.page == 'UBI':
         st.image("https://upload.wikimedia.org", width=700) # Placeholder
         st.caption("Waterfall details: Gross Sales -> COGS -> Trade Spend -> Net Margin")
 
-# --- MODULE 3: TPO SIMULATOR ---
+# --- MODULE 3: TPO SIMULATOR (UPDATED TO MATCH PDF) ---
 elif st.session_state.page == 'TPO':
-    st.title("TPO Simulator")
+    st.title("📈 TPO Simulator")
+    st.markdown("Model promotional scenarios and predict volume lift, revenue, and ROI")
+    
     sim_col1, sim_col2 = st.columns([1, 2])
     
     with sim_col1:
-        st.info("Promo Parameters")
-        st.selectbox("Retailer", ["Walmart", "Target", "Kroger"])
-        st.selectbox("Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal"])
-        st.selectbox("Discount Type", ["% Off", "BOGO", "TPR"])
-        st.number_input("Discount Amount (%)", value=20)
-        st.number_input("Duration (weeks)", value=2)
-        st.button("Run Simulation", type="primary", use_container_width=True)
+        st.markdown("### Promo Parameters")
+        with st.container(border=True):
+            retailer = st.selectbox("Retailer", ["Walmart", "Target", "Kroger"], index=0)
+            product = st.selectbox("Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal"], index=0)
+            disc_type = st.selectbox("Discount Type", ["% Off", "BOGO", "TPR"], index=0)
+            st.number_input("Discount Amount (%)", value=20)
+            st.number_input("Duration (weeks)", value=2)
+            st.button("Run Simulation", type="primary", use_container_width=True)
 
     with sim_col2:
-        st.subheader("Scenario Comparison")
-        comp_df = pd.DataFrame({
-            "Metric": ["Volume", "Revenue ($)", "Margin ($)", "ROI"],
-            "Baseline": ["42,000", "$168k", "$58.8k", "0.0x"],
-            "Scenario 1 (Moderate)": ["56,700 (+35%)", "$208k", "$45k", "1.6x"],
-            "Scenario 2 (Aggressive)": ["65,100 (+55%)", "$229k", "$38k", "0.9x"]
-        })
-        st.table(comp_df)
-        st.success("✅ **Recommendation**: Scenario 1 offers the best balance of volume lift and ROI at 1.6x.")
+        st.markdown("### Scenario Comparison")
+        
+        # --- PDF-Aligned Chart ---
+        # Data from Page 1 Scenario Comparison graph
+        categories = ['Volume', 'Revenue ($)']
+        baseline = [42000, 168000]
+        scenario1 = [56700, 208656]
+        scenario2 = [65100, 229152]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name='Baseline', x=categories, y=baseline, marker_color='#94A3B8'))
+        fig.add_trace(go.Bar(name='Scenario 1', x=categories, y=scenario1, marker_color='#3B82F6'))
+        fig.add_trace(go.Bar(name='Scenario 2', x=categories, y=scenario2, marker_color='#8B5CF6'))
+
+        fig.update_layout(
+            barmode='group', 
+            height=350, 
+            margin=dict(t=20, b=20, l=0, r=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        # --- Recommendation Box (Matches PDF Green Box) ---
+        st.success("✅ **Recommendation**: **Scenario 1 (Moderate)** offers the best balance of volume lift and ROI at **1.6x**")
+
+    # --- Detailed Comparison Cards (Matches PDF Page 1 Bottom) ---
+    st.markdown("---")
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.markdown("**Baseline**")
+        st.metric("Volume", "42,000")
+        st.metric("Revenue", "$168,000")
+        st.metric("Net Margin", "$58,800")
+        st.caption("ROI: 0.0x")
+
+    with c2:
+        st.markdown("**Scenario 1: Moderate**")
+        st.metric("Volume", "56,700", "35% Lift")
+        st.metric("Revenue", "$208,656")
+        st.metric("Net Margin", "$45,030")
+        st.markdown("<h3 style='color:#10B981;'>ROI: 1.6x</h3>", unsafe_allow_html=True)
+
+    with c3:
+        st.markdown("**Scenario 2: Aggressive**")
+        st.metric("Volume", "65,100", "55% Lift")
+        st.metric("Revenue", "$229,152")
+        st.metric("Net Margin", "$38,203")
+        st.markdown("<h3 style='color:#EF4444;'>ROI: 0.9x</h3>", unsafe_allow_html=True)
 
 # --- MODULE 4: GEN AI ASSISTANT ---
 elif st.session_state.page == 'AI':
