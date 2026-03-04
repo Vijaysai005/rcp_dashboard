@@ -151,7 +151,7 @@ elif st.session_state.page == 'UBI':
         st.table(dos_data.style.background_gradient(cmap='RdYlGn', subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap"]))
         st.error("🚨 **OOS Risk Alert**: Reynolds Wrap 200sqft at CVS (8 Days Supply) - Critical Risk Level")
 
-   with ubi_tabs[2]:
+    with ubi_tabs[2]:
        # 1. PAGE LEVEL FILTERS
        with st.container(border=True):
            f1, f2, f3 = st.columns(3)
@@ -217,7 +217,7 @@ elif st.session_state.page == 'UBI':
            fig_wf.update_layout(height=350, margin=dict(t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
            st.plotly_chart(fig_wf, use_container_width=True)
 
-       with col_roi:
+        with col_roi:
             st.subheader("Trade ROI Calculator")
             with st.container(border=True):
                 st.write(f"**Retailer:** {sel_retailer}")
