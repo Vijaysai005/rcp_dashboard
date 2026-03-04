@@ -141,15 +141,74 @@ elif st.session_state.page == 'UBI':
         st.line_chart(np.random.randn(12, 3) + [24, 19, 16])
 
     with ubi_tabs[1]:
+        # 1. PAGE LEVEL FILTERS (Reactive)
+        with st.container(border=True):
+            f1, f2 = st.columns(2)
+            with f1: sel_retailer_ubi = st.selectbox("Filter by Retailer", ["All", "Walmart", "Target", "Kroger", "CVS"], key="ubi_ret")
+            with f2: sel_cat_ubi = st.selectbox("Filter by Category", ["All", "Aluminum Foil", "Trash Bags", "Plastic Wrap", "Cookware"], key="ubi_cat")
+
+        # 2. INVENTORY HEALTH MATRIX (Data from PDF)
         st.subheader("Inventory Health Matrix (Days of Supply)")
         dos_data = pd.DataFrame({
-            "Retailer": ["Walmart", "Target", "Kroger", "CVS"],
+            "RETAILER": ["Walmart", "Target", "Kroger", "CVS"],
             "Aluminum Foil": [18, 25, 12, 8],
             "Trash Bags": [22, 19, 16, 11],
-            "Plastic Wrap": [15, 21, 14, 9]
+            "Plastic Wrap": [15, 21, 14, 9],
+            "Cookware": [28, 32, 24, 19]
         })
-        st.table(dos_data.style.background_gradient(cmap='RdYlGn', subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap"]))
-        st.error("🚨 **OOS Risk Alert**: Reynolds Wrap 200sqft at CVS (8 Days Supply) - Critical Risk Level")
+
+        # Apply filtering for display
+        display_dos = dos_data if sel_retailer_ubi == "All" else dos_data[dos_data["RETAILER"] == sel_retailer_ubi]
+        
+        def color_dos(val):
+            if isinstance(val, (int, float)):
+                if val < 10: return 'background-color: #FEE2E2; color: #991B1B; font-weight: bold' # Critical
+                if val <= 15: return 'background-color: #FEF3C7; color: #92400E' # Low
+                return 'background-color: #DCFCE7; color: #166534' # Healthy
+            return ''
+
+        st.table(display_dos.style.applymap(color_dos, subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap", "Cookware"]))
+
+        col_left, col_right = st.columns([2, 1])
+
+        # 3. INTERNAL SHIPMENTS vs POS (Visualized from PDF)
+        with col_left:
+            st.subheader("Internal Shipments vs POS Consumption")
+            # Realistic fluctuating data based on the PDF chart
+            weeks = [f"W{i}" for i in range(1, 9)]
+            shipments = [42000, 45000, 48000, 43000, 52000, 46000, 49000, 47000]
+            pos_cons = [38000, 41000, 43000, 40000, 44000, 47000, 45000, 48000]
+            
+            fig_sync = go.Figure()
+            fig_sync.add_trace(go.Bar(x=weeks, y=shipments, name="Internal Shipments", marker_color="#3B82F6", opacity=0.8))
+            fig_sync.add_trace(go.Scatter(x=weeks, y=pos_cons, name="POS Consumption", line=dict(color="#10B981", width=4), mode='lines+markers'))
+            fig_sync.update_layout(height=350, margin=dict(t=10, b=10), legend=dict(orientation="h", y=1.1))
+            st.plotly_chart(fig_sync, use_container_width=True)
+
+        # 4. OOS RISK RADAR (Data from PDF)
+        with col_right:
+            st.subheader("OOS Risk Radar")
+            oos_data = pd.DataFrame({
+                "SKU": ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Parchment 50sqft"],
+                "RETAILER": ["Kroger", "CVS", "Walmart"],
+                "DOS": [8, 9, 12],
+                "VELOCITY": ["High", "High", "Medium"],
+                "RISK": ["CRITICAL", "CRITICAL", "WARNING"]
+            })
+
+            # Filter logic for the Radar
+            filtered_oos = oos_data
+            if sel_retailer_ubi != "All":
+                filtered_oos = oos_data[oos_data["RETAILER"] == sel_retailer_ubi]
+            
+            if filtered_oos.empty:
+                st.success("✅ No critical OOS risks for selected filters.")
+            else:
+                for idx, row in filtered_oos.iterrows():
+                    color = "red" if row['RISK'] == "CRITICAL" else "orange"
+                    st.info(f"**{row['SKU']}** ({row['RETAILER']})\n\n"
+                            f"Status: :{color}[{row['RISK']}] | {row['DOS']} Days Supply")
+
 
     with ubi_tabs[2]:
        # 1. PAGE LEVEL FILTERS
