@@ -105,38 +105,56 @@ if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
     # 1. DATA QUALITY SCORECARD (High-Fidelity Donut Charts from PDF Page 4)
+    # --- MODULE 1: DATA MANAGEMENT (Data Quality Scorecard) ---
     st.subheader("Data Quality Scorecard")
-    dq_cols = st.columns(4)
+    dq1, dq2, dq3, dq4 = st.columns(4)
+
+    def create_aesthetic_donut(label, value, color, status):
+       # Create the Donut base
+       fig = go.Figure(data=[go.Pie(
+           values=[value, 100 - value],
+           hole=0.8,
+           marker_colors=[color, "#F1F5F9"],
+           textinfo='none',
+           hoverinfo='none',
+           showlegend=False
+       )])
+
+       # Center Text: Percentage
+       fig.add_annotation(
+           text=f"<b>{value}%</b>",
+           x=0.5, y=0.6, showarrow=False,
+           font=dict(size=28, color="#1E293B", family="Inter")
+       )
+
+       # Center Text: Status Badge (Excellent/Good)
+       fig.add_annotation(
+           text=f" {status} ",
+           x=0.5, y=0.38, showarrow=False,
+           font=dict(size=11, color=color, family="Inter"),
+           bgcolor=f"{color}15", # Faded background
+           bordercolor=color,
+           borderwidth=1,
+           borderpad=4
+       )
+
+       fig.update_layout(
+           title={'text': label, 'y': 0.9, 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top', 
+                  'font': {'size': 15, 'color': '#64748B'}},
+           margin=dict(t=40, b=10, l=10, r=10),
+           height=220,
+           paper_bgcolor="rgba(0,0,0,0)",
+           plot_bgcolor="rgba(0,0,0,0)"
+       )
+       return fig
+
+    # Display the 4 specific gauges from the PDF
+    with dq1: st.plotly_chart(create_aesthetic_donut("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
+    with dq2: st.plotly_chart(create_aesthetic_donut("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
+    with dq3: st.plotly_chart(create_aesthetic_donut("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
+    with dq4: st.plotly_chart(create_aesthetic_donut("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
+
     
-    # Function to create the high-fidelity Donut Chart
-    def create_donut(label, value, color, status):
-        fig = go.Figure(go.Pie(
-            values=[value, 100-value],
-            labels=[label, "Gap"],
-            hole=.75,
-            marker_colors=[color, "#F1F5F9"],
-            textinfo='none',
-            hoverinfo='none',
-            showlegend=False
-        ))
-        
-        # Add the percentage text in the center
-        fig.add_annotation(text=f"{value}%", x=0.5, y=0.6, font_size=24, font_family="Inter", font_weight="bold", showarrow=False)
-        fig.add_annotation(text=status, x=0.5, y=0.4, font_size=12, font_family="Inter", font_color=color, showarrow=False)
-        
-        fig.update_layout(
-            margin=dict(t=0, b=0, l=0, r=0),
-            height=180,
-            paper_bgcolor="white",
-        )
-        return fig
-
-    # Display the 4 Gauges from the PDF
-    with dq_cols[0]: st.plotly_chart(create_donut("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
-    with dq_cols[1]: st.plotly_chart(create_donut("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
-    with dq_cols[2]: st.plotly_chart(create_donut("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
-    with dq_cols[3]: st.plotly_chart(create_donut("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
     
