@@ -185,25 +185,70 @@ elif st.session_state.page == 'TPO':
 # --- MODULE 4: GEN AI ASSISTANT ---
 elif st.session_state.page == 'AI':
     st.title("✨ Gen AI NL Assistant")
-    st.markdown("Query your CPG data using natural language.")
     
-    # Define main layout: Chat (left), Context/Insights (right)
-    ai_left, ai_right = st.columns([0.7, 0.3])
-    
-    with ai_left:
-        st.subheader("Conversation")
-        # Example Chat History
-        with st.chat_message("assistant"):
-            st.write("Hello! I'm your CPG Analytics Assistant. Ask me about Reynolds market performance or trade effectiveness.")
-        
-        with st.chat_message("user"):
-            st.write("What was the ROI for the Q3 Walmart foil promo?")
-            
-        with st.chat_message("assistant"):
-            st.write("The Q3 Walmart foil promo resulted in a **1.8x ROI**, driven by a 25% lift in volume, despite a 10% lower margin per unit.")
+    # Initialize chat history if it doesn't exist
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello! I'm your CPG Analytics Assistant. I can help you analyze data, identify trends, and answer questions about Reynolds products. What would you like to know?"}
+        ]
 
-        # Input Area
-        st.chat_input("Ask a question about your CPG data...", key="ai_input")
+    ai_left, ai_right = st.columns([2, 1])
+
+    with ai_left:
+        # Display chat messages from history on app rerun
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # React to user input
+        if prompt := st.chat_input("Ask a question about your CPG data..."):
+            # Display user message in chat message container
+            st.chat_message("user").markdown(prompt)
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # --- MOCK LOGIC FOR RESPONSES ---
+            response = "I'm analyzing that for you..."
+            
+            if "margin draggers" in prompt.lower():
+                response = """Based on last month's data at **Walmart**, the top 3 margin draggers are:
+                1. **Reynolds Wrap 200sqft**: -2.1% (High promo depth)
+                2. **Hefty Ultra Strong 30Gal**: -1.5% (Logistics cost spike)
+                3. **Reynolds Foil 75sqft**: -0.8% (Commodity price impact)"""
+            
+            elif "roi" in prompt.lower():
+                response = "The best promo ROI currently is **1.6x** for the 'Moderate' scenario on Reynolds Wrap 200sqft at Walmart."
+            
+            elif "market share" in prompt.lower():
+                response = "Current Market Share is **23.4%**, which is **+1.2%** above the target of 22.5%."
+
+            # Display assistant response in chat message container
+            with st.chat_message("assistant"):
+                st.markdown(response)
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+    with ai_right:
+        st.subheader("Automated Insights")
+        
+        # Commodity Alert Styled Card
+        st.warning("""
+        **⚠️ Commodity Cost Alert**  
+        Aluminum commodity costs rose 3%, impacting foil margins.  
+        *Expected Q2 impact: -$1.2M*
+        """)
+        
+        st.info("""
+        **💡 Quick Questions**  
+        - Top margin draggers  
+        - Market share trends  
+        - Best promo ROI
+        """)
+        
+        if st.button("Clear Chat History"):
+            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+            st.rerun()
+
 
     with ai_right:
         st.subheader("💡 Context & Insights")
