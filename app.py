@@ -151,68 +151,73 @@ elif st.session_state.page == 'UBI':
         st.table(dos_data.style.background_gradient(cmap='RdYlGn', subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap"]))
         st.error("🚨 **OOS Risk Alert**: Reynolds Wrap 200sqft at CVS (8 Days Supply) - Critical Risk Level")
 
-    with ubi_tabs[2]:
-        # 1. PAGE LEVEL FILTERS
-        with st.container(border=True):
-            f1, f2, f3 = st.columns(3)
-            with f1: sel_retailer = st.selectbox("Select Retailer", ["All Retailers", "Walmart", "Target", "Kroger", "CVS"], index=1)
-            with f2: sel_product = st.selectbox("Select Product Category", ["All Products", "Aluminum Foil", "Trash Bags", "Plastic Wrap"], index=1)
-            with f3: sel_period = st.select_slider("Timeframe", options=["L3M", "L6M", "YTD", "FY2025"])
+   with ubi_tabs[2]:
+       # 1. PAGE LEVEL FILTERS
+       with st.container(border=True):
+           f1, f2, f3 = st.columns(3)
+           with f1: sel_retailer = st.selectbox("Select Retailer", ["Walmart", "Target", "Kroger", "CVS"], index=0)
+           with f2: sel_product = st.selectbox("Select Category", ["Aluminum Foil", "Trash Bags", "Plastic Wrap"], index=0)
+           with f3: sel_period = st.select_slider("Timeframe", options=["L3M", "L6M", "YTD"])
 
-        st.markdown("---")
+       # 2. REACTIVE DATA ENGINE (Mocks the Reynolds Database)
+       # Different data profiles for different retailers to show "reaction"
+       data_profiles = {
+           "Walmart": {"vol": [12, -2, 8, 15], "margin": [42, 18, 35, 38], "wf": [100, -28, -32, -12, 28]},
+           "Target":  {"vol": [5, 10, -5, 2], "margin": [35, 45, 22, 28], "wf": [100, -22, -35, -10, 33]},
+           "Kroger":  {"vol": [-8, 4, 12, -2], "margin": [15, 32, 48, 25], "wf": [100, -35, -30, -15, 20]},
+           "CVS":     {"vol": [2, -12, 3, 20], "margin": [28, 12, 31, 52], "wf": [100, -15, -40, -10, 35]}
+       }
+       
+       profile = data_profiles[sel_retailer]
+       sku_names = [f"{sel_product} 200ft", f"{sel_product} 75ft", "Hefty 30G", "Parchment 50ft"]
 
-        # 2. DRIVERS & DRAGGERS: SKU PERFORMANCE MATRIX
-        # Data based on Page 2 "Drivers & Draggers: SKU Performance Matrix"
-        st.subheader("Drivers & Draggers: SKU Performance Matrix")
-        
-        # Mock data points representing the scatter plot on Page 2
-        matrix_data = pd.DataFrame({
-            'SKU': ['Foil 200ft', 'Foil 75ft', 'Trash 30G', 'Wrap 100ft', 'Parchment 50ft', 'Foil 12ft'],
-            'Volume Growth (%)': [12, -5, 8, 2, 15, -10],
-            'Gross Margin (%)': [42, 18, 32, 28, 38, 15],
-            'Color': ['#10B981', '#EF4444', '#3B82F6', '#3B82F6', '#10B981', '#EF4444']
-        })
+       # 3. DRIVERS & DRAGGERS MATRIX
+       st.subheader(f"Drivers & Draggers: {sel_retailer} {sel_product}")
+       
+       # Determine color based on quadrants (Top-Right = Green, Bottom-Left = Red)
+       colors = []
+       for v, m in zip(profile["vol"], profile["margin"]):
+           if v > 0 and m > 30: colors.append('#10B981') # Driver
+           elif v < 0 and m < 30: colors.append('#EF4444') # Dragger
+           else: colors.append('#3B82F6') # Neutral/Steady
 
-        fig_matrix = go.Figure()
-        fig_matrix.add_trace(go.Scatter(
-            x=matrix_data['Volume Growth (%)'], y=matrix_data['Gross Margin (%)'],
-            mode='markers+text',
-            text=matrix_data['SKU'],
-            textposition="top center",
-            marker=dict(size=15, color=matrix_data['Color'], line=dict(width=1, color='DarkSlateGrey'))
-        ))
-        fig_matrix.add_hline(y=30, line_dash="dash", line_color="gray", annotation_text="Target Margin (30%)")
-        fig_matrix.add_vline(x=0, line_dash="dash", line_color="gray")
-        fig_matrix.update_layout(height=400, xaxis_title="Volume Growth (%)", yaxis_title="Gross Margin %", margin=dict(t=20))
-        st.plotly_chart(fig_matrix, use_container_width=True)
+       fig_matrix = go.Figure()
+       fig_matrix.add_trace(go.Scatter(
+           x=profile["vol"], y=profile["margin"],
+           mode='markers+text', text=sku_names, textposition="top center",
+           marker=dict(size=18, color=colors, line=dict(width=1, color='white'))
+       ))
+       
+       # Grid lines to define quadrants
+       fig_matrix.add_hline(y=30, line_dash="dash", line_color="#94A3B8", annotation_text="Margin Target")
+       fig_matrix.add_vline(x=0, line_dash="dash", line_color="#94A3B8")
+       
+       fig_matrix.update_layout(height=400, xaxis_title="Volume Growth (%)", yaxis_title="Gross Margin %",
+                                margin=dict(t=30, b=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#F8F9FA")
+       st.plotly_chart(fig_matrix, use_container_width=True)
 
-        st.markdown("---")
-        
-        # 3. MARGIN WATERFALL & TRADE ROI CALCULATOR
-        col_wf, col_roi = st.columns([2, 1])
+       st.markdown("---")
+       
+       # 4. MARGIN WATERFALL (DYNAMIC)
+       col_wf, col_roi = st.columns([2, 1])
 
-        with col_wf:
-            st.subheader("Margin Waterfall ($)")
-            # Data based on Page 2 "Margin Waterfall" visual
-            wf_labels = ["Gross Sales", "Trade Spend", "COGS", "Logistics", "Net Margin"]
-            wf_values = [100, -25, -35, -10, 30] # Percentages or scaled dollars
-            
-            fig_wf = go.Figure(go.Waterfall(
-                name = "20", orientation = "v",
-                measure = ["relative", "relative", "relative", "relative", "total"],
-                x = wf_labels,
-                textposition = "outside",
-                text = [f"${v}M" for v in wf_values],
-                y = wf_values,
-                connector = {"line":{"color":"rgb(63, 63, 63)"}},
-                increasing = {"marker":{"color":"#10B981"}},
-                decreasing = {"marker":{"color":"#EF4444"}},
-                totals = {"marker":{"color":"#3B82F6"}}
-            ))
-            fig_wf.update_layout(height=400, margin=dict(t=20, b=20))
-            st.plotly_chart(fig_wf, use_container_width=True)
+       with col_wf:
+           st.subheader(f"Margin Waterfall: {sel_retailer}")
+           wf_vals = profile["wf"]
+           fig_wf = go.Figure(go.Waterfall(
+               orientation = "v",
+               measure = ["relative", "relative", "relative", "relative", "total"],
+               x = ["Gross Sales", "Trade Spend", "COGS", "Supply Chain", "Net Margin"],
+               y = wf_vals,
+               text = [f"{v}%" if i < 4 else f"Net: {v}%" for i, v in enumerate(wf_vals)],
+               decreasing = {"marker":{"color":"#EF4444"}},
+               increasing = {"marker":{"color":"#10B981"}},
+               totals = {"marker":{"color":"#0E1629"}}
+           ))
+           fig_wf.update_layout(height=350, margin=dict(t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
+           st.plotly_chart(fig_wf, use_container_width=True)
 
-        with col_roi:
+       with col_roi:
             st.subheader("Trade ROI Calculator")
             with st.container(border=True):
                 st.write(f"**Retailer:** {sel_retailer}")
