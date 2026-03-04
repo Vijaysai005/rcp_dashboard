@@ -100,122 +100,93 @@ def draw_gauge(label, value, color="#2563EB"):
     return fig
 
 
+
 # --- MODULE 1: DATA MANAGEMENT ---
 if st.session_state.page == 'Data Management':
-    st.title("Data Management Portal")
+    st.title("Data Management") # Title matches PDF sidebar header
     
-    # 1. DATA QUALITY SCORECARD (High-Fidelity Donut Charts from PDF Page 4)
+    # 1. DATA QUALITY SCORECARD (Replicating PDF Page 4 layout)
     st.subheader("Data Quality Scorecard")
     dq_cols = st.columns(4)
     
-    def create_dq_scorecard(label, value, color, status):
-       # Determine background color for the 'gap' to keep it subtle
-       bg_color = "#F1F5F9"
-       
-       fig = go.Figure(go.Pie(
-           values=[value, 100-value],
-           labels=[label, "Gap"],
-           hole=.78,  # Larger hole for high-fidelity look
-           marker_colors=[color, bg_color],
-           textinfo='none',
-           hoverinfo='none',
-           showlegend=False,
-           sort=False
-       ))
-       
-       # Central Annotations for Value and Status
-       fig.add_annotation(
-           text=f"<b>{value}%</b>", 
-           x=0.5, y=0.55, 
-           font=dict(size=26, family="Inter, sans-serif", color="#1E293B"), 
-           showarrow=False
-       )
-       fig.add_annotation(
-           text=status.upper(), 
-           x=0.5, y=0.38, 
-           font=dict(size=11, family="Inter, sans-serif", color=color, weight="bold"), 
-           showarrow=False
-       )
-       
-       fig.update_layout(
-           margin=dict(t=10, b=10, l=10, r=10),
-           height=200,
-           paper_bgcolor="rgba(0,0,0,0)",
-           plot_bgcolor="rgba(0,0,0,0)",
-       )
-       
-       # Wrapper for the label above the chart
-       st.markdown(f"<p style='text-align: center; color: #64748B; font-weight: 600; margin-bottom: -40px;'>{label}</p>", unsafe_allow_html=True)
-       st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    def create_dq_scorecard(label, value, color, status, icon="✅"):
+       # Background and border styling to match the "card" look in the PDF
+       with st.container():
+           st.markdown(f"""
+            <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #E2E8F0; text-align: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: -20px;">
+                    <span style="color: #64748B; font-weight: 600; font-size: 14px;">{label}</span>
+                    <span style="font-size: 16px;">{icon}</span>
+                </div>
+            """, unsafe_allow_html=True)
+           
+           fig = go.Figure(go.Pie(
+               values=[value, 100-value],
+               hole=.78,
+               marker_colors=[color, "#F1F5F9"],
+               textinfo='none', hoverinfo='none', showlegend=False, sort=False
+           ))
+           
+           fig.add_annotation(text=f"<b>{value}%</b>", x=0.5, y=0.5, font=dict(size=28, family="Inter", color="#1E293B"), showarrow=False)
+           
+           fig.update_layout(
+               margin=dict(t=30, b=10, l=10, r=10),
+               height=160,
+               paper_bgcolor="rgba(0,0,0,0)",
+               plot_bgcolor="rgba(0,0,0,0)",
+           )
+           
+           st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+           st.markdown(f"""
+                <div style="background-color: {color}20; color: {color}; padding: 4px 12px; border-radius: 20px; display: inline-block; font-size: 12px; font-weight: bold;">
+                    {status.upper()}
+                </div>
+            </div>
+           """, unsafe_allow_html=True)
 
-    # --- DATA QUALITY LAYOUT ---
-    st.subheader("Data Quality Scorecard")
-    dq_cols = st.columns(4)
-
+    # Rendering the 4 cards from PDF Page 4
     with dq_cols[0]:
-       create_dq_scorecard("Nielsen POS", 98, "#10B981", "Excellent")
+       create_dq_scorecard("Nielsen POS", 98, "#10B981", "Excellent", "✅")
     with dq_cols[1]:
-       create_dq_scorecard("Internal Shipments", 100, "#10B981", "Excellent")
+       create_dq_scorecard("Internal Shipments", 100, "#10B981", "Excellent", "✅")
     with dq_cols[2]:
-       create_dq_scorecard("Trade Planner", 85, "#F59E0B", "Good")
+       create_dq_scorecard("Trade Planner", 85, "#F59E0B", "Good", "ⓘ")
     with dq_cols[3]:
-       create_dq_scorecard("IRI Data", 92, "#10B981", "Good")
+       create_dq_scorecard("IRI Data", 92, "#10B981", "Good", "ⓘ")
        
-       st.markdown("<br>", unsafe_allow_html=True)
-       st.markdown("---")
-       
-    # 2. SKU MAPPING ENGINE (Expanded to 30 Records)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # 2. SKU MAPPING ENGINE (Layout matching PDF)
     st.subheader("SKU Mapping Engine")
     
-    # Generate 30 Realistic Records
-    retailers = ["Walmart", "Target", "Kroger", "CVS", "Amazon", "Publix"]
-    products = ["Reynolds Wrap Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", 
-                "Reynolds Parchment 50sqft", "Reynolds Foil 75sqft", "Hefty Kitchen Bags 13Gal"]
-    
+    # Matching the Search/Filter bar layout from PDF Page 4
+    col_f1, col_f2 = st.columns([4, 1])
+    with col_f1: 
+        search = st.text_input("Search", placeholder="Q Search by SKU, description, or retailer...", label_visibility="collapsed")
+    with col_f2: 
+        status_filter = st.selectbox("Filter", ["All", "Mapped", "Unmapped"], label_visibility="collapsed")
+
+    # Generate/Filter Records
+    retailers = ["Walmart", "Target", "Kroger", "CVS"]
+    products = ["Reynolds Wrap Aluminum Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft"]
     data = []
-    for i in range(30):
-        ret = retailers[i % len(retailers)]
-        prod = products[i % len(products)]
-        sku_id = f"{ret[:3].upper()}-RF-{100 + i}"
-        sap_id = f"1000{234567 + i}" if i % 5 != 0 else "Pending"
-        status = "Mapped" if sap_id != "Pending" else "Unmapped"
+    for i in range(20):
+        res = "Mapped" if i % 5 != 0 else "Unmapped"
         data.append({
-            "Retailer": ret,
-            "Retailer SKU": sku_id,
-            "Product Description": prod,
-            "SAP Material #": sap_id,
-            "Status": status
+            "RETAILER": retailers[i % 4],
+            "RETAILER SKU": f"WMT-RF-200-{i:02d}",
+            "PRODUCT DESCRIPTION": products[i % 3],
+            "MATERIAL #": f"1000{234567 + i}" if res == "Mapped" else "Pending",
+            "STATUS": "🟢 Mapped" if res == "Mapped" else "🟠 Unmapped"
         })
     
     mapping_df = pd.DataFrame(data)
-
-    # Search and Filter UI
-    col_f1, col_f2 = st.columns([3, 1])
-    with col_f1: 
-        search = st.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-RF-200")
-    with col_f2: 
-        status_filter = st.selectbox("Status", ["All", "Mapped", "Unmapped"])
-
-    # Apply Filters
     if search:
         mapping_df = mapping_df[mapping_df.apply(lambda row: search.lower() in row.astype(str).str.lower().values, axis=1)]
     if status_filter != "All":
-        mapping_df = mapping_df[mapping_df["Status"] == status_filter]
+        mapping_df = mapping_df[mapping_df["STATUS"].str.contains(status_filter)]
 
-    # Stylized Dataframe
-    st.dataframe(
-        mapping_df, 
-        use_container_width=True, 
-        hide_index=True,
-        height=500, # Set height to make it scrollable for 30 records
-        column_config={
-            "Status": st.column_config.TextColumn(
-                "Status",
-                help="Mapping status from Retailer to SAP",
-                validate="^Mapped|Unmapped$"
-            )
-        }
-    )
+    st.dataframe(mapping_df, use_container_width=True, hide_index=True)
 
 # --- MODULE 2: UNIFIED BUSINESS INTELLIGENCE ---
 elif st.session_state.page == 'UBI':
