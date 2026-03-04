@@ -1,193 +1,204 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
-import io
 
-# ==========================================
-# 1. PAGE CONFIGURATION & THEME
-# ==========================================
-st.set_page_config(
-    page_title="Reynolds CPG Analytics",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="Reynolds CPG Analytics Toolkit", layout="wide")
 
-# ==========================================
-# 2. CUSTOM CSS (Dark Sidebar / Light Main)
-# ==========================================
+# --- CUSTOM CSS FOR HIGH-FIDELITY UI ---
 st.markdown("""
 <style>
-    /* FORCE DARK SIDEBAR */
+    /* Main Background */
+    .stApp { background-color: #F8F9FA; }
+    
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #001529 !important;
-        color: white;
+        background-color: #0E1629;
+        min-width: 280px !important;
     }
     
-    /* LEFT ALIGN SIDEBAR CONTENT */
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        align-items: flex-start !important;
+    /* Left-aligned Sidebar Buttons */
+    .stButton > button {
+        width: 100%;
+        background-color: transparent;
+        color: #AEB9C8;
+        border: none;
+        text-align: left;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 4px;
         display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
+        align-items: center;
+        transition: 0.2s;
+    }
+    .stButton > button:hover {
+        background-color: #1E293B;
+        color: #FFFFFF;
+        border: none;
+    }
+    /* Active/Focus State */
+    .stButton > button:focus {
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        box-shadow: none;
     }
 
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] span, [data-testid="stSidebar"] p {
-        color: #ffffff !important;
-        text-align: left !important;
+    /* Metric Card Styling */
+    div[data-testid="stMetric"] {
+        background-color: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #E2E8F0;
     }
-    
-    /* LOGO STYLING */
-    .sidebar-logo {
-        width: 180px;
-        filter: brightness(0) invert(1); /* Makes the logo white for dark background */
-        margin-bottom: 10px;
-    }
-    
-    /* BUTTON STYLING IN SIDEBAR */
-    [data-testid="stSidebar"] .stButton button {
-        text-align: left;
-        padding-left: 15px;
-        border: 1px solid rgba(255,255,255,0.2);
-        justify-content: flex-start;
-        display: flex;
-        width: 100%;
-    }
-    
-    /* MAIN CONTENT STYLING */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* TABLE HEADER COLOR */
-    thead tr th:first-child {display:none}
-    tbody th {display:none}
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 3. SESSION STATE MANAGEMENT
-# ==========================================
-if "selected_module" not in st.session_state:
-    st.session_state.selected_module = "Data Management"
+# --- SESSION STATE NAVIGATION ---
+# Defaulting to UBI or whichever page you'd like to see first
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 'UBI' 
 
-def set_page(page_name):
-    st.session_state.selected_module = page_name
+def nav_to(page):
+    st.session_state.current_page = page
 
-# ==========================================
-# 4. BACKEND DUMMY DATA GENERATOR
-# ==========================================
-def get_dummy_data():
-    csv_data = """Retailer,Retailer SKU,Product Description,SAP Material #,Status,Freshness
-Walmart,WMT-RF-200-01,Reynolds Wrap Aluminum Foil 200sqft,1000234567,Mapped,99%
-Target,TGT-HF-TR-13G,Hefty Ultra Strong Trash Bags 13 Gal,1000239988,Mapped,100%
-Kroger,KRO-PL-WR-100,Reynolds Kitchens Plastic Wrap 100sqft,1000231122,Unmapped,85%
-Costco,CST-RF-HD-500,Reynolds Wrap Heavy Duty 500sqft,,Unmapped,90%
-Amazon,AMZ-PARCH-50,Reynolds Kitchens Parchment Paper,1000237744,Mapped,98%
-Sam's Club,SAM-HEFTY-L,Hefty Large Black Trash Bags 30 Gal,1000235566,Mapped,100%
-Publix,PUB-SLOW-CK,Reynolds Slow Cooker Liners 6ct,,Unmapped,80%
-Walmart,WMT-WAX-75,Reynolds Cut-Rite Wax Paper,1000233344,Mapped,95%
-"""
-    return pd.read_csv(io.StringIO(csv_data))
+# --- SIDEBAR ---
+with st.sidebar:
+    st.markdown("<h2 style='color:white; margin-bottom:0;'>Reynolds</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#64748B; margin-top:0;'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # REORDERED NAVIGATION: Data Management moved to the bottom
+    st.button("📊  Unified Business Intelligence", on_click=nav_to, args=('UBI',))
+    st.button("📈  TPO Simulator", on_click=nav_to, args=('TPO',))
+    st.button("✨  Gen AI Assistant", on_click=nav_to, args=('AI',))
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.button("🗄️  Data Management", on_click=nav_to, args=('Data Management',))
+    
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Global Filters")
+    sel_retailer = st.sidebar.selectbox("Select Retailer", ["All Retailers", "Walmart", "Target", "Kroger", "CVS"])
+    sel_category = st.sidebar.selectbox("Product Category", ["All", "Aluminum Foil", "Trash Bags", "Plastic Wrap"])
+    
+    st.sidebar.caption("© 2026 Reynolds Consumer Products")
 
-# ==========================================
-# 5. UI COMPONENT FUNCTIONS
-# ==========================================
-
-def create_donut_chart(value, title, status_text, color):
+# --- GAUGE COMPONENT ---
+def draw_gauge(label, value, color="#2563EB"):
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = value,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': title, 'font': {'size': 14, 'color': "#666"}},
-        number = {'suffix': "%", 'font': {'size': 24, 'color': "#333"}},
+        title = {'text': label, 'font': {'size': 16}},
         gauge = {
-            'axis': {'range': [None, 100], 'visible': False},
+            'axis': {'range': [0, 100]},
             'bar': {'color': color},
             'bgcolor': "white",
-            'borderwidth': 0,
-            'bordercolor': "white",
-            'steps': [
-                {'range': [0, 100], 'color': "#f0f2f5"} 
-            ],
+            'steps': [{'range': [0, 70], 'color': '#FEE2E2'}, {'range': [70, 90], 'color': '#FEF3C7'}, {'range': [90, 100], 'color': '#DCFCE7'}]
         }
     ))
-    fig.update_layout(
-        height=160, 
-        margin={'t': 40, 'b': 10, 'l': 20, 'r': 20},
-        paper_bgcolor='rgba(0,0,0,0)',
-        font={'family': "Arial"}
-    )
+    fig.update_layout(height=180, margin=dict(l=20, r=20, t=30, b=20), paper_bgcolor="rgba(0,0,0,0)")
     return fig
 
-def render_sidebar():
-    with st.sidebar:
-        # Reynolds Logo and Brand Header
-        st.markdown('<img src="https://www.reynoldsconsumerproducts.com" class="sidebar-logo">', unsafe_allow_html=True)
-        st.markdown("## **Reynolds**")
-        st.markdown("<p style='color:#a6b1b7; margin-top:-15px; font-size:14px'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
-        st.markdown("---")
-        
-        # NAVIGATION BUTTONS
-        if st.button("📁 Data Management", use_container_width=True, type="primary" if st.session_state.selected_module == "Data Management" else "secondary"):
-            set_page("Data Management")
-            
-        if st.button("📊 Unified Business Intelligence", use_container_width=True, type="primary" if st.session_state.selected_module == "Unified Business Intelligence" else "secondary"):
-            set_page("Unified Business Intelligence")
-            
-        if st.button("🎯 TPO Simulator", use_container_width=True, type="primary" if st.session_state.selected_module == "TPO Simulator" else "secondary"):
-            set_page("TPO Simulator")
-            
-        if st.button("💬 Gen AI Assistant", use_container_width=True, type="primary" if st.session_state.selected_module == "Gen AI Assistant" else "secondary"):
-            set_page("Gen AI Assistant")
+# --- MODULE CONTENT ---
 
-        st.markdown("---")
-        st.markdown(f"<p style='color:#5c6b7f; font-size:12px'>© 2026 Reynolds Consumer Products</p>", unsafe_allow_html=True)
-
-# ==========================================
-# 6. MAIN APPLICATION LOGIC
-# ==========================================
-
-def main():
-    render_sidebar()
-    module = st.session_state.selected_module
+# 1. UNIFIED BUSINESS INTELLIGENCE
+if st.session_state.current_page == 'UBI':
+    st.title("Unified Business Intelligence")
+    ubi_tabs = st.tabs(["Enterprise KPI Scorecard", "Shipment to Shelf", "SKU & Customer Profitability"])
     
-    if module == "Data Management":
-        st.markdown("### Data Quality Scorecard")
-        c1, c2, c3, c4 = st.columns(4)
+    with ubi_tabs[0]:
+        st.subheader(f"Key Performance Indicators: {sel_retailer}")
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Market Share", "23.4%", "1.2%", help="Target: 22.5%")
+        k2.metric("Velocity", "4.2", "-0.3", help="Target: 4.5")
+        k3.metric("Gross Margin", "34.8%", "2.1%", help="Target: 33.0%")
+        k4.metric("Trade ROI", "2.8x", "0.4x", help="Target: 2.5x")
         
-        with c1:
-            st.plotly_chart(create_donut_chart(98, "Nielsen POS", "Excellent", "#00C49F"), use_container_width=True)
-            st.markdown("<div style='text-align:center; color:#00C49F; font-weight:bold; margin-top:-10px'>Excellent</div>", unsafe_allow_html=True)
-            
-        with c2:
-            st.plotly_chart(create_donut_chart(100, "Internal Shipments", "Excellent", "#00C49F"), use_container_width=True)
-            st.markdown("<div style='text-align:center; color:#00C49F; font-weight:bold; margin-top:-10px'>Excellent</div>", unsafe_allow_html=True)
+        st.subheader("Market Share Tracker (12 Month)")
+        st.line_chart(pd.DataFrame(np.random.randn(12, 3), columns=['Reynolds', 'Competitor A', 'Private Label']))
 
-        with c3:
-            st.plotly_chart(create_donut_chart(85, "Trade Planner", "Good", "#FFBB28"), use_container_width=True)
-            st.markdown("<div style='text-align:center; color:#FFBB28; font-weight:bold; margin-top:-10px'>Good</div>", unsafe_allow_html=True)
+    with ubi_tabs[1]:
+        st.subheader("Inventory Health Matrix (Days of Supply)")
+        dos_df = pd.DataFrame({
+            "Retailer": ["Walmart", "Target", "Kroger", "CVS"],
+            "Aluminum Foil": [18, 25, 12, 8],
+            "Trash Bags": [22, 19, 16, 11],
+            "Plastic Wrap": [15, 21, 14, 9]
+        })
+        st.table(dos_df.style.background_gradient(cmap='RdYlGn', subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap"]))
 
-        with c4:
-            st.plotly_chart(create_donut_chart(92, "IRI Data", "Good", "#00C49F"), use_container_width=True)
-            st.markdown("<div style='text-align:center; color:#00C49F; font-weight:bold; margin-top:-10px'>Good</div>", unsafe_allow_html=True)
+    with ubi_tabs[2]:
+        st.subheader("Margin Waterfall")
+        fig_wf = go.Figure(go.Waterfall(
+            orientation = "v",
+            measure = ["relative", "relative", "relative", "total"],
+            x = ["Gross Revenue", "COGS", "Trade Spend", "Net Margin"],
+            y = [100, -42, -18, 40],
+            connector = {"line":{"color":"#cbd5e1"}}
+        ))
+        st.plotly_chart(fig_wf, use_container_width=True)
 
-        st.markdown("---")
-        st.markdown("### SKU Mapping Engine")
-        col_search, col_filter = st.columns([3, 1])
-        df = get_dummy_data()
-        with col_search:
-            search_query = st.text_input("🔍 Search by SKU, description, or retailer...", "")
-        with col_filter:
-            status_filter = st.selectbox("Filter Status", ["All", "Mapped", "Unmapped"])
+# 2. TPO SIMULATOR
+elif st.session_state.current_page == 'TPO':
+    st.title("TPO Simulator")
+    sim_col1, sim_col2 = st.columns([1, 2])
+    
+    with sim_col1:
+        st.info("Promo Parameters")
+        st.selectbox("Select Target Retailer", ["Walmart", "Target", "Kroger"])
+        st.selectbox("Select Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal"])
+        st.selectbox("Discount Type", ["% Off", "TPR", "Display"])
+        st.slider("Discount Amount (%)", 0, 50, 20)
+        st.button("Run Simulation", type="primary", use_container_width=True)
 
-        if status_filter != "All":
-            df = df[df["Status"] == status_filter]
-        if search_query:
-            df = df[df["Product Description"].str.contains(search_query, case=False) | df["Retailer SKU"].str.contains(search_query, case=False)]
+    with sim_col2:
+        st.subheader("Scenario Comparison")
+        comparison = pd.DataFrame({
+            "Metric": ["Predicted Volume", "Predicted Revenue", "Promo Spend", "Predicted ROI"],
+            "Baseline": ["42,000", "$168,000", "$0", "0.0x"],
+            "Scenario 1 (Moderate)": ["56,700 (+35%)", "$208,656", "$28,000", "1.6x"],
+            "Scenario 2 (Aggressive)": ["65,100 (+55%)", "$229,152", "$42,000", "0.9x"]
+        })
+        st.table(comparison)
+        st.success("✅ Recommendation: Scenario 1 offers the best balance of volume lift and ROI.")
 
-        st.dataframe(df, use_container_width=True)
+# 3. GEN AI ASSISTANT
+elif st.session_state.current_page == 'AI':
+    st.title("Gen AI NL Assistant")
+    chat_col, alert_col = st.columns([2, 1])
+    
+    with chat_col:
+        st.chat_message("assistant").write("Hello! I'm your CPG Assistant. How can I help you analyze Reynolds data today?")
+        st.text_input("Ask a question about your CPG data...", placeholder="e.g., Show me top margin draggers at Walmart")
+        st.caption("Suggested: 'Market share trends' | 'Best promo ROI'")
 
-if __name__ == "__main__":
-    main()
+    with alert_col:
+        st.markdown("### Automated Insights")
+        st.warning("**Commodity Cost Alert**\nAluminum costs rose 3%, impacting foil margins.")
+        st.info("**Retailer Insight**\nWalmart promo ROI exceeded target by 0.4x.")
+
+# 4. DATA MANAGEMENT (Now at bottom of sidebar list)
+elif st.session_state.current_page == 'Data Management':
+    st.title("Data Management Portal")
+    
+    st.subheader("Data Quality Scorecard")
+    g1, g2, g3, g4 = st.columns(4)
+    g1.plotly_chart(draw_gauge("Nielsen POS", 98, "#10B981"), use_container_width=True)
+    g2.plotly_chart(draw_gauge("Internal Shipments", 100, "#10B981"), use_container_width=True)
+    g3.plotly_chart(draw_gauge("Trade Planner", 85, "#F59E0B"), use_container_width=True)
+    g4.plotly_chart(draw_gauge("IRI Data", 92, "#10B981"), use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("SKU Mapping Engine")
+    col_s1, col_s2 = st.columns([2, 1])
+    search_sku = col_s1.text_input("Search by SKU or Description")
+    status_filter = col_s2.selectbox("Status", ["All", "Mapped", "Unmapped"])
+    
+    mapping_data = pd.DataFrame({
+        "Retailer": ["Walmart", "Target", "Kroger", "CVS", "Walmart"],
+        "Retailer SKU": ["WMT-RF-200-01", "TGT-TB-30-50", "KRG-PW-100", "CVS-AF-75", "WMT-P-50"],
+        "Product Description": ["Reynolds Wrap Aluminum Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", "Reynolds Foil 75sqft", "Reynolds Parchment 50sqft"],
+        "SAP Material #": ["1000234567", "1000987654", "1000556677", "1000334455", "1000112233"],
+        "Status": ["Mapped", "Mapped", "Unmapped", "Mapped", "Mapped"]
+    })
+    st.dataframe(mapping_data, use_container_width=True, hide_index=True)
