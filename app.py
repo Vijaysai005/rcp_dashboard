@@ -102,29 +102,43 @@ def draw_gauge(label, value, color="#2563EB"):
 
 # --- MODULE 1: DATA MANAGEMENT ---
 if st.session_state.page == 'Data Management':
+if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
-    # 1. DATA QUALITY SCORECARD (High-Fidelity KPI Cards from PDF Page 4)
+    # 1. DATA QUALITY SCORECARD (High-Fidelity Donut Charts from PDF Page 4)
     st.subheader("Data Quality Scorecard")
-    dq1, dq2, dq3, dq4 = st.columns(4)
+    dq_cols = st.columns(4)
     
-    # Custom HTML/CSS for the Circular KPI look
-    def dq_card(label, value, status, color):
-        st.markdown(f"""
-        <div style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-            <p style="color: #64748B; font-size: 14px; margin-bottom: 5px; font-weight: 600;">{label}</p>
-            <div style="font-size: 32px; font-weight: 700; color: #1E293B;">{value}%</div>
-            <div style="display: inline-block; padding: 2px 10px; border-radius: 20px; background-color: {color}20; color: {color}; font-size: 12px; font-weight: 600; margin-top: 5px;">
-                ● {status}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Function to create the high-fidelity Donut Chart
+    def create_donut(label, value, color, status):
+        fig = go.Figure(go.Pie(
+            values=[value, 100-value],
+            labels=[label, "Gap"],
+            hole=.75,
+            marker_colors=[color, "#F1F5F9"],
+            textinfo='none',
+            hoverinfo='none',
+            showlegend=False
+        ))
+        
+        # Add the percentage text in the center
+        fig.add_annotation(text=f"{value}%", x=0.5, y=0.6, font_size=24, font_family="Inter", font_weight="bold", showarrow=False)
+        fig.add_annotation(text=status, x=0.5, y=0.4, font_size=12, font_family="Inter", font_color=color, showarrow=False)
+        
+        fig.update_layout(
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=180,
+            paper_bgcolor="white",
+            annotations=
+        )
+        return fig
 
-    with dq1: dq_card("Nielsen POS", 98, "Excellent", "#10B981")
-    with dq2: dq_card("Internal Shipments", 100, "Excellent", "#10B981")
-    with dq3: dq_card("Trade Planner", 85, "Good", "#F59E0B")
-    with dq4: dq_card("IRI Data", 92, "Good", "#10B981")
-    
+    # Display the 4 Gauges from the PDF
+    with dq_cols[0]: st.plotly_chart(create_donut("Nielsen POS", 98, "#10B981", "Excellent"), use_container_width=True)
+    with dq_cols[1]: st.plotly_chart(create_donut("Internal Shipments", 100, "#10B981", "Excellent"), use_container_width=True)
+    with dq_cols[2]: st.plotly_chart(create_donut("Trade Planner", 85, "#F59E0B", "Good"), use_container_width=True)
+    with dq_cols[3]: st.plotly_chart(create_donut("IRI Data", 92, "#10B981", "Good"), use_container_width=True)
+
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
     
