@@ -70,10 +70,10 @@ with st.sidebar:
     st.markdown("<p style='color:#64748B; margin-top:0;'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
-    if st.button("🗄️  Data Management"): set_page('Data Management')
     if st.button("📊  Unified Business Intelligence"): set_page('UBI')
     if st.button("📈  TPO Simulator"): set_page('TPO')
     if st.button("✨  Gen AI Assistant"): set_page('AI')
+    if st.button("🗄️  Data Management"): set_page('Data Management')
     
     st.sidebar.markdown("---")
     st.sidebar.caption("© 2026 Reynolds Consumer Products")
@@ -99,31 +99,87 @@ def draw_gauge(label, value, color="#2563EB"):
     fig.update_layout(height=200, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
     return fig
 
+
 # --- MODULE 1: DATA MANAGEMENT ---
 if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
+    # 1. DATA QUALITY SCORECARD (High-Fidelity KPI Cards from PDF Page 4)
     st.subheader("Data Quality Scorecard")
-    g1, g2, g3, g4 = st.columns(4)
-    with g1: st.plotly_chart(draw_gauge("Nielsen POS", 98, "#10B981"), use_container_width=True)
-    with g2: st.plotly_chart(draw_gauge("Internal Shipments", 100, "#10B981"), use_container_width=True)
-    with g3: st.plotly_chart(draw_gauge("Trade Planner", 85, "#F59E0B"), use_container_width=True)
-    with g4: st.plotly_chart(draw_gauge("IRI Data", 92, "#10B981"), use_container_width=True)
+    dq1, dq2, dq3, dq4 = st.columns(4)
     
+    # Custom HTML/CSS for the Circular KPI look
+    def dq_card(label, value, status, color):
+        st.markdown(f"""
+        <div style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <p style="color: #64748B; font-size: 14px; margin-bottom: 5px; font-weight: 600;">{label}</p>
+            <div style="font-size: 32px; font-weight: 700; color: #1E293B;">{value}%</div>
+            <div style="display: inline-block; padding: 2px 10px; border-radius: 20px; background-color: {color}20; color: {color}; font-size: 12px; font-weight: 600; margin-top: 5px;">
+                ● {status}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with dq1: dq_card("Nielsen POS", 98, "Excellent", "#10B981")
+    with dq2: dq_card("Internal Shipments", 100, "Excellent", "#10B981")
+    with dq3: dq_card("Trade Planner", 85, "Good", "#F59E0B")
+    with dq4: dq_card("IRI Data", 92, "Good", "#10B981")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
-    st.subheader("SKU Mapping Engine")
-    col_f1, col_f2 = st.columns([2, 1])
-    search = col_f1.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-RF-200")
-    status_filter = col_f2.selectbox("Status", ["All", "Mapped", "Unmapped"])
     
-    mapping_df = pd.DataFrame({
-        "Retailer": ["Walmart", "Target", "Kroger", "CVS", "Walmart", "Kroger"],
-        "Retailer SKU": ["WMT-RF-200-01", "TGT-TB-30-50", "KRG-PW-100", "CVS-AF-75", "WMT-P-50", "KRG-F-12"],
-        "Product Description": ["Reynolds Wrap Aluminum Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", "Reynolds Foil 75sqft", "Reynolds Parchment 50sqft", "Reynolds Foil 12sqft"],
-        "SAP Material #": ["1000234567", "1000987654", "1000556677", "1000334455", "1000112233", "Pending"],
-        "Status": ["Mapped", "Mapped", "Unmapped", "Mapped", "Mapped", "Unmapped"]
-    })
-    st.dataframe(mapping_df, use_container_width=True, hide_index=True)
+    # 2. SKU MAPPING ENGINE (Expanded to 30 Records)
+    st.subheader("SKU Mapping Engine")
+    
+    # Generate 30 Realistic Records
+    retailers = ["Walmart", "Target", "Kroger", "CVS", "Amazon", "Publix"]
+    products = ["Reynolds Wrap Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", 
+                "Reynolds Parchment 50sqft", "Reynolds Foil 75sqft", "Hefty Kitchen Bags 13Gal"]
+    
+    data = []
+    for i in range(30):
+        ret = retailers[i % len(retailers)]
+        prod = products[i % len(products)]
+        sku_id = f"{ret[:3].upper()}-RF-{100 + i}"
+        sap_id = f"1000{234567 + i}" if i % 5 != 0 else "Pending"
+        status = "Mapped" if sap_id != "Pending" else "Unmapped"
+        data.append({
+            "Retailer": ret,
+            "Retailer SKU": sku_id,
+            "Product Description": prod,
+            "SAP Material #": sap_id,
+            "Status": status
+        })
+    
+    mapping_df = pd.DataFrame(data)
+
+    # Search and Filter UI
+    col_f1, col_f2 = st.columns([3, 1])
+    with col_f1: 
+        search = st.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-RF-200")
+    with col_f2: 
+        status_filter = st.selectbox("Status", ["All", "Mapped", "Unmapped"])
+
+    # Apply Filters
+    if search:
+        mapping_df = mapping_df[mapping_df.apply(lambda row: search.lower() in row.astype(str).str.lower().values, axis=1)]
+    if status_filter != "All":
+        mapping_df = mapping_df[mapping_df["Status"] == status_filter]
+
+    # Stylized Dataframe
+    st.dataframe(
+        mapping_df, 
+        use_container_width=True, 
+        hide_index=True,
+        height=500, # Set height to make it scrollable for 30 records
+        column_config={
+            "Status": st.column_config.TextColumn(
+                "Status",
+                help="Mapping status from Retailer to SAP",
+                validate="^Mapped|Unmapped$"
+            )
+        }
+    )
 
 # --- MODULE 2: UNIFIED BUSINESS INTELLIGENCE ---
 elif st.session_state.page == 'UBI':
