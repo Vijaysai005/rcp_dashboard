@@ -16,6 +16,40 @@ st.set_page_config(
 # ==========================================
 # 2. CUSTOM CSS (Dark Sidebar / Light Main)
 # ==========================================
+
+# ==========================================
+# 2. CUSTOM CSS (Updated Button Visibility)
+# ==========================================
+st.markdown("""
+<style>
+    /* ... (keep your existing sidebar and block-container code) ... */
+
+    /* BUTTON STYLING IN SIDEBAR - FIX VISIBILITY & ALIGNMENT */
+    [data-testid="stSidebar"] .stButton button {
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding-left: 15px !important;
+        width: 100%;
+        display: flex;
+        /* Force color so text is visible on the white button backgrounds */
+        color: #001529 !important; 
+        border: 1px solid rgba(0,0,0,0.1) !important;
+    }
+
+    /* Keep the active (Primary) button readable */
+    [data-testid="stSidebar"] .stButton button[kind="primary"] {
+        color: white !important;
+        background-color: #FF4B4B !important; /* Your red highlight color */
+    }
+
+    /* Optional: Ensure the text inside the span is also forced to dark */
+    [data-testid="stSidebar"] .stButton button p {
+        color: inherit !important;
+        text-align: left !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
     /* FORCE DARK SIDEBAR */
