@@ -20,19 +20,38 @@ st.markdown("""
 <style>
     /* FORCE DARK SIDEBAR */
     [data-testid="stSidebar"] {
-        background-color: #001529;
+        background-color: #001529 !important;
         color: white;
     }
+    
+    /* LEFT ALIGN SIDEBAR CONTENT */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        align-items: flex-start !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] span, [data-testid="stSidebar"] p {
         color: #ffffff !important;
+        text-align: left !important;
+    }
+    
+    /* LOGO STYLING */
+    .sidebar-logo {
+        width: 180px;
+        filter: brightness(0) invert(1); /* Makes the logo white for dark background */
+        margin-bottom: 10px;
     }
     
     /* BUTTON STYLING IN SIDEBAR */
-    /* Target buttons inside the sidebar to look clean */
     [data-testid="stSidebar"] .stButton button {
         text-align: left;
-        padding-left: 20px;
+        padding-left: 15px;
         border: 1px solid rgba(255,255,255,0.2);
+        justify-content: flex-start;
+        display: flex;
+        width: 100%;
     }
     
     /* MAIN CONTENT STYLING */
@@ -50,15 +69,11 @@ st.markdown("""
 # ==========================================
 # 3. SESSION STATE MANAGEMENT
 # ==========================================
-# Initialize the active page in session state if it doesn't exist
 if "selected_module" not in st.session_state:
     st.session_state.selected_module = "Data Management"
 
 def set_page(page_name):
-    """Helper to set the page and rerun"""
     st.session_state.selected_module = page_name
-    # st.experimental_rerun() is deprecated in newer versions, using standard run flow
-    # Streamlit will auto-rerun on button click interaction
 
 # ==========================================
 # 4. BACKEND DUMMY DATA GENERATOR
@@ -108,14 +123,13 @@ def create_donut_chart(value, title, status_text, color):
 
 def render_sidebar():
     with st.sidebar:
-        # Brand Header
+        # Reynolds Logo and Brand Header
+        st.markdown('<img src="https://www.reynoldsconsumerproducts.com" class="sidebar-logo">', unsafe_allow_html=True)
         st.markdown("## **Reynolds**")
         st.markdown("<p style='color:#a6b1b7; margin-top:-15px; font-size:14px'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
         st.markdown("---")
         
         # NAVIGATION BUTTONS
-        # Logic: Check current state. If match, use type="primary" (filled), else "secondary" (outline)
-        
         if st.button("📁 Data Management", use_container_width=True, type="primary" if st.session_state.selected_module == "Data Management" else "secondary"):
             set_page("Data Management")
             
@@ -139,13 +153,8 @@ def main():
     render_sidebar()
     module = st.session_state.selected_module
     
-    # ---------------------------------------------------------
-    # MODULE 1: DATA MANAGEMENT (Default)
-    # ---------------------------------------------------------
     if module == "Data Management":
         st.markdown("### Data Quality Scorecard")
-        
-        # -- Scorecard Row --
         c1, c2, c3, c4 = st.columns(4)
         
         with c1:
@@ -165,69 +174,20 @@ def main():
             st.markdown("<div style='text-align:center; color:#00C49F; font-weight:bold; margin-top:-10px'>Good</div>", unsafe_allow_html=True)
 
         st.markdown("---")
-        
-        # -- SKU Mapping Engine --
         st.markdown("### SKU Mapping Engine")
-        
-        # Controls
         col_search, col_filter = st.columns([3, 1])
-        
         df = get_dummy_data()
-        
         with col_search:
             search_query = st.text_input("🔍 Search by SKU, description, or retailer...", "")
-            
         with col_filter:
             status_filter = st.selectbox("Filter Status", ["All", "Mapped", "Unmapped"])
 
-        # Filtering Logic
         if status_filter != "All":
             df = df[df["Status"] == status_filter]
-            
         if search_query:
-            df = df[
-                df["Product Description"].str.contains(search_query, case=False) | 
-                df["Retailer SKU"].str.contains(search_query, case=False)
-            ]
+            df = df[df["Product Description"].str.contains(search_query, case=False) | df["Retailer SKU"].str.contains(search_query, case=False)]
 
-        # Stylized Data Table
-        st.dataframe(
-            df,
-            column_config={
-                "Retailer": st.column_config.TextColumn("RETAILER", width="small"),
-                "Retailer SKU": st.column_config.TextColumn("RETAILER SKU", width="medium"),
-                "Product Description": st.column_config.TextColumn("PRODUCT DESCRIPTION", width="large"),
-                "SAP Material #": st.column_config.TextColumn("SAP MATERIAL #", width="medium"),
-                "Status": st.column_config.TextColumn(
-                    "STATUS", 
-                    width="small",
-                    help="Mapping status of the SKU"
-                ),
-                "Freshness": st.column_config.ProgressColumn(
-                    "DATA HEALTH",
-                    format="%f",
-                    min_value=0,
-                    max_value=100,
-                ),
-            },
-            use_container_width=True,
-            hide_index=True
-        )
-
-    # ---------------------------------------------------------
-    # PLACEHOLDERS FOR OTHER MODULES
-    # ---------------------------------------------------------
-    elif module == "Unified Business Intelligence":
-        st.title("📊 Unified Business Intelligence")
-        st.info("🚧 This module is currently under development.")
-        
-    elif module == "TPO Simulator":
-        st.title("🎯 Trade Promotion Optimization")
-        st.info("🚧 Simulator loading engines...")
-        
-    elif module == "Gen AI Assistant":
-        st.title("💬 Gen AI Assistant")
-        st.info("How can I help you with your CPG data today?")
+        st.dataframe(df, use_container_width=True)
 
 if __name__ == "__main__":
     main()
