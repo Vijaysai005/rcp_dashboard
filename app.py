@@ -80,7 +80,7 @@ with st.sidebar:
     st.markdown("<p style='color:#64748B; margin-top:0;'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
-    if st.button("📊  Unified Business Intelligence"): set_page('UBI')
+    if st.button("📊  Enterprise Analytics"): set_page('UBI')
     if st.button("📈  TPO Simulator"): set_page('TPO')
     if st.button("✨  Gen AI Assistant"): set_page('AI')
     if st.button("🗄️  Data Management"): set_page('Data Management')
@@ -200,7 +200,7 @@ if st.session_state.page == 'Data Management':
 
 # --- MODULE 2: UNIFIED BUSINESS INTELLIGENCE ---
 elif st.session_state.page == 'UBI':
-    st.title("Unified Business Intelligence")
+    st.title("Enterprise Analytics")
     ubi_tabs = st.tabs(["Enterprise KPI Scorecard", "Shipment to Shelf", "SKU & Customer Profitability"])
     
     with ubi_tabs[0]:
