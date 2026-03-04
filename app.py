@@ -2,143 +2,230 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import io
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Reynolds CPG Analytics Toolkit", layout="wide")
 
-# --- EXPANDED MOCK CSV DATA (10 COMBINATIONS) ---
-csv_data = """Retailer,Product,Market_Share,Velocity,Gross_Margin,Trade_ROI,DOS,SAP_Material,Status
-Walmart,Reynolds Wrap 200sqft,23.4,4.2,34.8,2.8,18,1000234567,Mapped
-Walmart,Hefty Ultra Strong 30Gal,18.2,3.9,31.5,2.4,22,1000987654,Mapped
-Target,Reynolds Wrap 200sqft,22.1,4.2,34.8,2.8,25,1000234567,Mapped
-Target,Hefty Ultra Strong 30Gal,19.5,4.5,33.0,2.9,19,1000987654,Mapped
-Kroger,Reynolds Wrap 200sqft,21.8,3.8,32.5,2.1,12,1000234567,Unmapped
-Kroger,Hefty Ultra Strong 30Gal,17.4,4.1,30.8,2.2,16,1000987654,Mapped
-CVS,Reynolds Wrap 200sqft,15.5,2.9,28.5,1.8,8,1000234567,Mapped
-CVS,Reynolds Parchment 50sqft,12.1,3.2,27.0,1.5,11,1000112233,Mapped
-Walmart,Reynolds Plastic Wrap 100sqft,20.2,4.0,33.5,2.6,20,1000556677,Mapped
-Target,Reynolds Bakeware Pan,14.8,3.5,29.2,2.0,14,1000443322,Unmapped
-"""
-df_master = pd.read_csv(io.StringIO(csv_data))
-
-# --- CUSTOM CSS ---
+# --- CUSTOM CSS FOR HIGH-FIDELITY UI ---
 st.markdown("""
 <style>
+    /* Main Background */
     .stApp { background-color: #F8F9FA; }
-    [data-testid="stSidebar"] { background-color: #0E1629; min-width: 280px !important; }
     
-    /* Sidebar Buttons - Left Aligned */
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #0E1629;
+        min-width: 280px !important;
+    }
+    
+    /* Left-aligned Sidebar Buttons with Active State */
     .stButton > button {
-        width: 100%; background-color: transparent; color: #AEB9C8;
-        border: none; text-align: left; padding: 12px 20px;
-        font-size: 16px; border-radius: 4px; display: flex; align-items: center;
+        width: 100%;
+        background-color: transparent;
+        color: #AEB9C8;
+        border: none;
+        text-align: left;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        transition: 0.2s;
     }
-    .stButton > button:hover { background-color: #1E293B; color: #FFFFFF; }
-    .stButton > button:focus { background-color: #2563EB !important; color: #FFFFFF !important; }
+    .stButton > button:hover {
+        background-color: #1E293B;
+        color: #FFFFFF;
+        border: none;
+    }
+    .stButton > button:focus, .stButton > button:active {
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        box-shadow: none;
+    }
+
+    /* Professional Headers */
+    h1, h2, h3 { color: #1E293B; font-family: 'Inter', sans-serif; }
     
-    /* KPI Cards */
+    /* Metric Card Styling */
     div[data-testid="stMetric"] {
-        background-color: white; padding: 15px; border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;
+        background-color: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #E2E8F0;
     }
-    
-    /* Status Label Alignment */
-    .quality-label { text-align: center; font-weight: bold; font-size: 14px; margin-top: -35px; margin-bottom: 20px; }
-    .status-excellent { color: #10B981; }
-    .status-good { color: #F59E0B; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- NAVIGATION ---
-if 'page' not in st.session_state: st.session_state.page = 'UBI'
-def nav(p): st.session_state.page = p
+# --- SESSION STATE FOR NAVIGATION ---
+if 'page' not in st.session_state:
+    st.session_state.page = 'Data Management'
 
+def set_page(page_name):
+    st.session_state.page = page_name
+
+# --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h2 style='color:white; margin-bottom:0;'>Reynolds</h2><p style='color:#64748B;'>Analytics Toolkit</p>", unsafe_allow_html=True)
-    st.button("📊  Unified Business Intelligence", on_click=nav, args=('UBI',))
-    st.button("📈  TPO Simulator", on_click=nav, args=('TPO',))
-    st.button("✨  Gen AI Assistant", on_click=nav, args=('AI',))
-    st.button("🗄️  Data Management", on_click=nav, args=('DM',))
+    st.markdown("<h2 style='color:white; margin-bottom:0;'>Reynolds</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#64748B; margin-top:0;'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    if st.button("🗄️  Data Management"): set_page('Data Management')
+    if st.button("📊  Unified Business Intelligence"): set_page('UBI')
+    if st.button("📈  TPO Simulator"): set_page('TPO')
+    if st.button("✨  Gen AI Assistant"): set_page('AI')
+    
     st.sidebar.markdown("---")
     st.sidebar.caption("© 2026 Reynolds Consumer Products")
 
-# --- REFINED DONUT COMPONENT ---
-def draw_quality_donut(label, value, color, status_text):
-    fig = go.Figure(data=[go.Pie(labels=[label, 'Rem'], values=[value, 100-value], hole=.78, 
-                                 marker_colors=[color, '#F1F5F9'], textinfo='none', showlegend=False)])
-    fig.add_annotation(text=f"<b>{value}%</b>", x=0.5, y=0.5, showarrow=False, font_size=24, font_color="#1E293B")
-    fig.update_layout(
-        title={'text': label, 'y': 0.9, 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top', 'font': {'size': 16, 'color': '#64748B'}}, 
-        height=220, margin=dict(t=60, b=0, l=10, r=10), paper_bgcolor="rgba(0,0,0,0)"
-    )
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    status_class = "status-excellent" if status_text == "Excellent" else "status-good"
-    st.markdown(f"<div class='quality-label {status_class}'>{status_text}</div>", unsafe_allow_html=True)
+# --- GAUGE COMPONENT FUNCTION ---
+def draw_gauge(label, value, color="#2563EB"):
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = value,
+        title = {'text': label, 'font': {'size': 18}},
+        gauge = {
+            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'bar': {'color': color},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "#E2E8F0",
+            'steps': [
+                {'range': [0, 70], 'color': '#FEE2E2'},
+                {'range': [70, 90], 'color': '#FEF3C7'},
+                {'range': [90, 100], 'color': '#DCFCE7'}],
+        }
+    ))
+    fig.update_layout(height=200, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
+    return fig
 
-# --- PAGES ---
-
-if st.session_state.page == 'UBI':
-    st.title("Unified Business Intelligence")
-    f1, f2 = st.columns(2)
-    s_ret = f1.selectbox("Retailer", df_master['Retailer'].unique())
-    s_prod = f2.selectbox("Product", df_master[df_master['Retailer']==s_ret]['Product'].unique())
-    
-    row = df_master[(df_master['Retailer'] == s_ret) & (df_master['Product'] == s_prod)].iloc
-    
-    t1, t2, t3 = st.tabs(["KPI Scorecard", "Shipment to Shelf", "Profitability"])
-    with t1:
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Market Share", f"{row['Market_Share']}%", "+1.2%")
-        k2.metric("Velocity", row['Velocity'], "-0.3")
-        k3.metric("Gross Margin", f"{row['Gross_Margin']}%", "+2.1%")
-        k4.metric("Trade ROI", f"{row['Trade_ROI']}x", "+0.4x")
-        st.subheader("Volume Trends")
-        st.line_chart(np.random.randint(200, 600, size=(12, 2)))
-
-    with t2:
-        st.subheader("Out-of-Stock Risk Radar")
-        st.table(df_master[df_master['Retailer'] == s_ret][['Product', 'DOS']])
-
-elif st.session_state.page == 'TPO':
-    st.title("TPO Simulator")
-    f1, f2 = st.columns(2)
-    f1.selectbox("Retailer", df_master['Retailer'].unique(), key="t_r")
-    f2.selectbox("Product", df_master['Product'].unique(), key="t_p")
-    st.info("Simulate promotional scenarios to predict volume lift and ROI.")
-    st.slider("Discount (%)", 5, 50, 20)
-    st.button("Generate Forecast", type="primary")
-
-elif st.session_state.page == 'DM':
+# --- MODULE 1: DATA MANAGEMENT ---
+if st.session_state.page == 'Data Management':
     st.title("Data Management Portal")
     
-    # Data Quality Scorecard Section
     st.subheader("Data Quality Scorecard")
-    d1, d2, d3, d4 = st.columns(4)
-    with d1: draw_quality_donut("Nielsen POS", 98, "#10B981", "Excellent")
-    with d2: draw_quality_donut("Internal Shipments", 100, "#3B82F6", "Excellent")
-    with d3: draw_quality_donut("Trade Planner", 85, "#F59E0B", "Good")
-    with d4: draw_quality_donut("IRI Data", 92, "#8B5CF6", "Good")
-
+    g1, g2, g3, g4 = st.columns(4)
+    with g1: st.plotly_chart(draw_gauge("Nielsen POS", 98, "#10B981"), use_container_width=True)
+    with g2: st.plotly_chart(draw_gauge("Internal Shipments", 100, "#10B981"), use_container_width=True)
+    with g3: st.plotly_chart(draw_gauge("Trade Planner", 85, "#F59E0B"), use_container_width=True)
+    with g4: st.plotly_chart(draw_gauge("IRI Data", 92, "#10B981"), use_container_width=True)
+    
     st.markdown("---")
-    
-    # SKU Mapping Engine Section with Filters (Aligned with Image)
     st.subheader("SKU Mapping Engine")
+    col_f1, col_f2 = st.columns([2, 1])
+    search = col_f1.text_input("🔍 Search by SKU, description, or retailer...", placeholder="e.g. WMT-RF-200")
+    status_filter = col_f2.selectbox("Status", ["All", "Mapped", "Unmapped"])
     
-    c_s1, c_s2, c_s3 = st.columns()
-    search_q = c_s1.text_input("🔍 Search by SKU, description, or retailer...")
-    status_q = c_s2.selectbox("Status", ["All", "Mapped", "Unmapped"])
-    material_q = c_s3.selectbox("Retailer", ["All"] + list(df_master['Retailer'].unique()))
+    mapping_df = pd.DataFrame({
+        "Retailer": ["Walmart", "Target", "Kroger", "CVS", "Walmart", "Kroger"],
+        "Retailer SKU": ["WMT-RF-200-01", "TGT-TB-30-50", "KRG-PW-100", "CVS-AF-75", "WMT-P-50", "KRG-F-12"],
+        "Product Description": ["Reynolds Wrap Aluminum Foil 200sqft", "Hefty Ultra Strong 30Gal", "Reynolds Plastic Wrap 100sqft", "Reynolds Foil 75sqft", "Reynolds Parchment 50sqft", "Reynolds Foil 12sqft"],
+        "SAP Material #": ["1000234567", "1000987654", "1000556677", "1000334455", "1000112233", "Pending"],
+        "Status": ["Mapped", "Mapped", "Unmapped", "Mapped", "Mapped", "Unmapped"]
+    })
+    st.dataframe(mapping_df, use_container_width=True, hide_index=True)
 
-    # Apply Filters
-    df_map = df_master.copy()
-    if status_q != "All": df_map = df_map[df_map['Status'] == status_q]
-    if material_q != "All": df_map = df_map[df_map['Retailer'] == material_q]
-    if search_q: df_map = df_map[df_map['Product'].str.contains(search_q, case=False) | df_map['Retailer SKU'].str.contains(search_q, case=False)]
+# --- MODULE 2: UNIFIED BUSINESS INTELLIGENCE ---
+elif st.session_state.page == 'UBI':
+    st.title("Unified Business Intelligence")
+    ubi_tabs = st.tabs(["Enterprise KPI Scorecard", "Shipment to Shelf", "SKU & Customer Profitability"])
+    
+    with ubi_tabs[0]:
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Market Share", "23.4%", "1.2%", help="Target: 22.5%")
+        k2.metric("Velocity", "4.2", "-0.3", help="Target: 4.5")
+        k3.metric("Gross Margin", "34.8%", "2.1%", help="Target: 33.0%")
+        k4.metric("Trade ROI", "2.8x", "0.4x", help="Target: 2.5x")
+        
+        st.subheader("Market Share Tracker (12 Month)")
+        st.line_chart(np.random.randn(12, 3) + [24, 19, 16])
 
-    st.dataframe(df_map[['Retailer', 'Product', 'SAP_Material', 'Status']], use_container_width=True, hide_index=True)
+    with ubi_tabs[1]:
+        st.subheader("Inventory Health Matrix (Days of Supply)")
+        dos_data = pd.DataFrame({
+            "Retailer": ["Walmart", "Target", "Kroger", "CVS"],
+            "Aluminum Foil": [18, 25, 12, 8],
+            "Trash Bags": [22, 19, 16, 11],
+            "Plastic Wrap": [15, 21, 14, 9]
+        })
+        st.table(dos_data.style.background_gradient(cmap='RdYlGn', subset=["Aluminum Foil", "Trash Bags", "Plastic Wrap"]))
+        st.error("🚨 **OOS Risk Alert**: Reynolds Wrap 200sqft at CVS (8 Days Supply) - Critical Risk Level")
 
+    with ubi_tabs[2]:
+        st.subheader("Margin Waterfall")
+        # Simplified representation of the waterfall logic
+        st.image("https://upload.wikimedia.org", width=700) # Placeholder
+        st.caption("Waterfall details: Gross Sales -> COGS -> Trade Spend -> Net Margin")
+
+# --- MODULE 3: TPO SIMULATOR ---
+elif st.session_state.page == 'TPO':
+    st.title("TPO Simulator")
+    sim_col1, sim_col2 = st.columns([1, 2])
+    
+    with sim_col1:
+        st.info("Promo Parameters")
+        st.selectbox("Retailer", ["Walmart", "Target", "Kroger"])
+        st.selectbox("Product", ["Reynolds Wrap 200sqft", "Hefty Ultra Strong 30Gal"])
+        st.selectbox("Discount Type", ["% Off", "BOGO", "TPR"])
+        st.number_input("Discount Amount (%)", value=20)
+        st.number_input("Duration (weeks)", value=2)
+        st.button("Run Simulation", type="primary", use_container_width=True)
+
+    with sim_col2:
+        st.subheader("Scenario Comparison")
+        comp_df = pd.DataFrame({
+            "Metric": ["Volume", "Revenue ($)", "Margin ($)", "ROI"],
+            "Baseline": ["42,000", "$168k", "$58.8k", "0.0x"],
+            "Scenario 1 (Moderate)": ["56,700 (+35%)", "$208k", "$45k", "1.6x"],
+            "Scenario 2 (Aggressive)": ["65,100 (+55%)", "$229k", "$38k", "0.9x"]
+        })
+        st.table(comp_df)
+        st.success("✅ **Recommendation**: Scenario 1 offers the best balance of volume lift and ROI at 1.6x.")
+
+# --- MODULE 4: GEN AI ASSISTANT ---
 elif st.session_state.page == 'AI':
-    st.title("Gen AI Assistant")
-    st.chat_message("assistant").write("Hello! I can help you identify trends or margin draggers. What would you like to know?")
-    st.text_input("Ask about your CPG data...")
+    st.title("✨ Gen AI NL Assistant")
+    st.markdown("Query your CPG data using natural language.")
+    
+    # Define main layout: Chat (left), Context/Insights (right)
+    ai_left, ai_right = st.columns([0.7, 0.3])
+    
+    with ai_left:
+        st.subheader("Conversation")
+        # Example Chat History
+        with st.chat_message("assistant"):
+            st.write("Hello! I'm your CPG Analytics Assistant. Ask me about Reynolds market performance or trade effectiveness.")
+        
+        with st.chat_message("user"):
+            st.write("What was the ROI for the Q3 Walmart foil promo?")
+            
+        with st.chat_message("assistant"):
+            st.write("The Q3 Walmart foil promo resulted in a **1.8x ROI**, driven by a 25% lift in volume, despite a 10% lower margin per unit.")
+
+        # Input Area
+        st.chat_input("Ask a question about your CPG data...", key="ai_input")
+
+    with ai_right:
+        st.subheader("💡 Context & Insights")
+        
+        # 1. Data Source Indicators
+        st.markdown("**Data Sources Active**")
+        st.checkbox("Nielsen POS (Wk 40)", value=True)
+        st.checkbox("Internal Shipments (Wk 40)", value=True)
+        st.checkbox("Trade Planner", value=True)
+        
+        st.markdown("---")
+        
+        # 2. Key Insights Panel
+        st.markdown("**Top Insights**")
+        with st.expander("🚨 OOS Risk: CVS", expanded=True):
+            st.caption("Reynolds Wrap 200sqft at CVS is at 8 Days Supply.")
+            
+        with st.expander("📈 Best Promo ROI", expanded=True):
+            st.caption("Target TGT-TB-30-50 shows 2.2x ROI (Moderate Discount).")
+
+        # 3. Suggested Prompts
+        st.markdown("---")
+        st.markdown("**Try asking:**")
+        st.markdown("- *Show me top 5 margin draggers at Walmart last month*")
+        st.markdown("- *Compare ROI: BOGO vs % Off on Foil*")
