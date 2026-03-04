@@ -546,7 +546,7 @@ elif st.session_state.page == 'TPO':
 
 # --- MODULE 4: GEN AI ASSISTANT ---
 elif st.session_state.page == 'AI':
-    st.title("✨ Gen AI NL Assistant")
+    st.title("✨ Gen AI Assistant")
     
     # Initialize chat history if it doesn't exist
     if "messages" not in st.session_state:
