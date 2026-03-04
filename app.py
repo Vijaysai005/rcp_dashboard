@@ -26,35 +26,19 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] span, [data-testid="stSidebar"] p {
         color: #ffffff !important;
     }
-    /* Sidebar Nav Styling */
-    div[data-testid="stRadio"] > label > div:first-child {
-        display: none;
-    }
-    div[data-testid="stRadio"] label {
-        color: white !important;
-        font-size: 16px;
-        padding: 10px;
-        border-radius: 5px;
-    }
-    div[data-testid="stRadio"] label:hover {
-        background-color: #1890ff;
-        cursor: pointer;
+    
+    /* BUTTON STYLING IN SIDEBAR */
+    /* Target buttons inside the sidebar to look clean */
+    [data-testid="stSidebar"] .stButton button {
+        text-align: left;
+        padding-left: 20px;
+        border: 1px solid rgba(255,255,255,0.2);
     }
     
     /* MAIN CONTENT STYLING */
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-    }
-    
-    /* CUSTOM METRIC CARDS */
-    .metric-card {
-        background-color: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        text-align: center;
     }
     
     /* TABLE HEADER COLOR */
@@ -64,10 +48,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. BACKEND DUMMY DATA GENERATOR
+# 3. SESSION STATE MANAGEMENT
+# ==========================================
+# Initialize the active page in session state if it doesn't exist
+if "selected_module" not in st.session_state:
+    st.session_state.selected_module = "Data Management"
+
+def set_page(page_name):
+    """Helper to set the page and rerun"""
+    st.session_state.selected_module = page_name
+    # st.experimental_rerun() is deprecated in newer versions, using standard run flow
+    # Streamlit will auto-rerun on button click interaction
+
+# ==========================================
+# 4. BACKEND DUMMY DATA GENERATOR
 # ==========================================
 def get_dummy_data():
-    # Simulating a CSV file load
     csv_data = """Retailer,Retailer SKU,Product Description,SAP Material #,Status,Freshness
 Walmart,WMT-RF-200-01,Reynolds Wrap Aluminum Foil 200sqft,1000234567,Mapped,99%
 Target,TGT-HF-TR-13G,Hefty Ultra Strong Trash Bags 13 Gal,1000239988,Mapped,100%
@@ -81,11 +77,10 @@ Walmart,WMT-WAX-75,Reynolds Cut-Rite Wax Paper,1000233344,Mapped,95%
     return pd.read_csv(io.StringIO(csv_data))
 
 # ==========================================
-# 4. UI COMPONENT FUNCTIONS
+# 5. UI COMPONENT FUNCTIONS
 # ==========================================
 
 def create_donut_chart(value, title, status_text, color):
-    """Creates a Plotly gauge/donut chart similar to the mockup"""
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = value,
@@ -99,18 +94,16 @@ def create_donut_chart(value, title, status_text, color):
             'borderwidth': 0,
             'bordercolor': "white",
             'steps': [
-                {'range': [0, 100], 'color': "#f0f2f5"} # Grey background ring
+                {'range': [0, 100], 'color': "#f0f2f5"} 
             ],
         }
     ))
-    
     fig.update_layout(
         height=160, 
         margin={'t': 40, 'b': 10, 'l': 20, 'r': 20},
         paper_bgcolor='rgba(0,0,0,0)',
         font={'family': "Arial"}
     )
-    
     return fig
 
 def render_sidebar():
@@ -120,24 +113,31 @@ def render_sidebar():
         st.markdown("<p style='color:#a6b1b7; margin-top:-15px; font-size:14px'>CPG Analytics Toolkit</p>", unsafe_allow_html=True)
         st.markdown("---")
         
-        # Navigation
-        selected = st.radio(
-            "Navigation", 
-            ["Data Management", "Unified Business Intelligence", "TPO Simulator", "Gen AI Assistant"],
-            index=0
-        )
+        # NAVIGATION BUTTONS
+        # Logic: Check current state. If match, use type="primary" (filled), else "secondary" (outline)
         
+        if st.button("📁 Data Management", use_container_width=True, type="primary" if st.session_state.selected_module == "Data Management" else "secondary"):
+            set_page("Data Management")
+            
+        if st.button("📊 Unified Business Intelligence", use_container_width=True, type="primary" if st.session_state.selected_module == "Unified Business Intelligence" else "secondary"):
+            set_page("Unified Business Intelligence")
+            
+        if st.button("🎯 TPO Simulator", use_container_width=True, type="primary" if st.session_state.selected_module == "TPO Simulator" else "secondary"):
+            set_page("TPO Simulator")
+            
+        if st.button("💬 Gen AI Assistant", use_container_width=True, type="primary" if st.session_state.selected_module == "Gen AI Assistant" else "secondary"):
+            set_page("Gen AI Assistant")
+
         st.markdown("---")
         st.markdown(f"<p style='color:#5c6b7f; font-size:12px'>© 2026 Reynolds Consumer Products</p>", unsafe_allow_html=True)
-        
-        return selected
 
 # ==========================================
-# 5. MAIN APPLICATION LOGIC
+# 6. MAIN APPLICATION LOGIC
 # ==========================================
 
 def main():
-    module = render_sidebar()
+    render_sidebar()
+    module = st.session_state.selected_module
     
     # ---------------------------------------------------------
     # MODULE 1: DATA MANAGEMENT (Default)
@@ -218,11 +218,16 @@ def main():
     # PLACEHOLDERS FOR OTHER MODULES
     # ---------------------------------------------------------
     elif module == "Unified Business Intelligence":
-        st.info("🚧 Unified Business Intelligence module is currently under development.")
+        st.title("📊 Unified Business Intelligence")
+        st.info("🚧 This module is currently under development.")
+        
     elif module == "TPO Simulator":
-        st.info("🚧 Trade Promotion Optimization Simulator is loading...")
+        st.title("🎯 Trade Promotion Optimization")
+        st.info("🚧 Simulator loading engines...")
+        
     elif module == "Gen AI Assistant":
-        st.info("💬 Gen AI Assistant is ready to chat.")
+        st.title("💬 Gen AI Assistant")
+        st.info("How can I help you with your CPG data today?")
 
 if __name__ == "__main__":
     main()
